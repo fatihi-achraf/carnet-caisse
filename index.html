@@ -92,6 +92,8 @@ button{cursor:pointer}
 .field>span{font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
 .field input,.field textarea{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
 .field textarea{resize:vertical;min-height:72px}
+.field select{width:100%;min-width:0;min-height:46px;padding:10px 40px 10px 12px;border:1px solid var(--line);border-radius:10px;background-color:var(--surface);color:var(--ink);font:inherit;font-weight:500;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a94b3' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:16px;text-overflow:ellipsis}
+.field select:focus{outline:2px solid var(--ink-2);outline-offset:1px}
 .money{position:relative}
 .money input{font-family:var(--f-mono);font-weight:600;font-size:1.9rem;min-height:64px;padding-right:58px;text-align:right}
 .money i{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-style:normal;font-family:var(--f-display);font-weight:700;color:var(--ink-2)}
@@ -157,6 +159,7 @@ button{cursor:pointer}
 .hero .sub{opacity:.9;font-size:.9rem}
 .hero .profit{margin-block-start:12px;padding-block-start:10px;border-top:1px solid color-mix(in srgb,var(--hero-fg) 35%,transparent);font-weight:600;opacity:1}
 .subl{display:block;color:var(--ink-2);font-size:.8rem;margin-block-start:2px}
+.crow .csum{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.8rem;color:var(--ink-2);padding-block-end:8px}.crow .csum b{font-family:var(--f-mono);color:var(--ink)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 16px 16px;margin-block-start:16px;box-shadow:var(--shadow)}
 .card h2{font-family:var(--f-display);font-weight:700;font-size:1rem;padding-block:14px 4px}
 .lrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;border-bottom:1px dashed var(--line)}
@@ -180,9 +183,9 @@ button{cursor:pointer}
 .hint{color:var(--ink-2);font-size:.85rem;margin-block-start:10px}
 .xscroll{overflow-x:auto}
 .dtable{width:100%;border-collapse:collapse}
-.dtable th{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);text-align:right;padding:6px 8px;font-weight:600}
+.dtable th{font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);text-align:right;padding:6px 5px;font-weight:600}
 .dtable th:first-child{text-align:left}
-.dtable td{padding:9px 8px;border-top:1px solid var(--line);text-align:right;font-family:var(--f-mono);font-size:.88rem;white-space:nowrap}
+.dtable td{padding:9px 5px;border-top:1px solid var(--line);text-align:right;font-family:var(--f-mono);font-size:.8rem;white-space:nowrap}
 .dtable td:first-child{text-align:left;font-family:var(--f-body);font-weight:500}
 .dtable td.bar{background:linear-gradient(to right,var(--vente-bg) var(--w,0%),transparent var(--w,0%));color:var(--vente)}
 .dtable td.ch{color:var(--charge)}
@@ -197,6 +200,16 @@ button{cursor:pointer}
 .crow ul{list-style:none;margin:0 0 10px;padding:0;font-size:.85rem;color:var(--ink-2)}
 .crow li{display:flex;justify-content:space-between;gap:12px;padding-block:5px;border-top:1px dashed var(--line)}
 .crow li b{font-family:var(--f-mono);font-weight:600}
+.pop{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:calc(70px + env(safe-area-inset-top,0px)) 24px 24px;pointer-events:none;z-index:20}
+.pop[hidden]{display:none}
+.pop>div{pointer-events:auto;width:min(88vw,360px);background:var(--surface);color:var(--ink);border-radius:18px;padding:24px 20px;text-align:center;box-shadow:0 20px 50px -10px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;align-items:center}
+.pop i{font-style:normal;width:56px;height:56px;border-radius:50%;background:var(--ok);color:#fff;font-size:2rem;line-height:56px;font-weight:700}
+.pop b{font-family:var(--f-display);font-size:1.2rem}
+.pop span{color:var(--ink-2);font-size:.92rem}
+.linkbtn{background:none;border:0;color:var(--ink-2);text-decoration:underline;padding:6px 0;text-align:left;font:inherit;font-size:.85rem;cursor:pointer;align-self:flex-start}
+.cli{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:52px;text-align:left;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:var(--ink);cursor:pointer}
+.cli:first-of-type{border-top:0}.cli b{font-family:var(--f-mono);white-space:nowrap}.cli.due b{color:var(--charge)}.cli.adv b{color:var(--ok)}
+.cdet ul{list-style:none;margin:8px 0 10px;padding:0;font-size:.88rem;color:var(--ink-2)}.cdet li{display:flex;justify-content:space-between;gap:12px;padding-block:6px;border-top:1px dashed var(--line)}.cdet li b{font-family:var(--f-mono);font-weight:600;white-space:nowrap}
 .hrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 0;border:0;border-top:1px solid var(--line);background:none}
 .hrow:first-of-type{border-top:0}
 .hrow .hw b{display:block}
@@ -209,7 +222,7 @@ button{cursor:pointer}
 
 /* bottom tabs + toast */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.tabbar div{max-width:640px;margin-inline:auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tabbar div{max-width:640px;margin-inline:auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;border:0;background:none;color:var(--ink-2);font-size:.78rem;font-weight:600}
 .tab[aria-selected="true"]{color:var(--vente);box-shadow:inset 0 3px 0 var(--vente)}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
@@ -258,11 +271,15 @@ button{cursor:pointer}
           <div class="modes" id="modes">
             <input type="radio" name="mode" id="m-especes" value="especes" checked><label for="m-especes">Espèces</label>
             <input type="radio" name="mode" id="m-virement" value="virement"><label for="m-virement">Virement</label>
-            <input type="radio" name="mode" id="m-carte" value="carte"><label for="m-carte">Carte</label>
             <input type="radio" name="mode" id="m-cheque" value="cheque"><label for="m-cheque">Chèque</label>
             <input type="radio" name="mode" id="m-credit" value="credit"><label for="m-credit" id="lbl-credit">Crédit</label>
           </div>
         </fieldset>
+        <div class="field" id="productBox" hidden>
+          <label for="product">Produit (facultatif)</label>
+          <select id="product"><option value="">— Sans produit —</option></select>
+          <button type="button" class="linkbtn" id="prodManage">Ajouter ou modifier les produits</button>
+        </div>
         <div class="field cpick" id="clientBox" hidden>
           <span id="clientCap">Client</span>
           <div class="csel" id="clientSel" hidden></div>
@@ -298,6 +315,16 @@ button{cursor:pointer}
             <button class="ghost" id="importCheck" type="button">Vérifier le message</button>
             <button class="primary" id="importGo" type="button" hidden>Importer</button>
           </div>
+        </div>
+      </details>
+      <details class="import" id="prodBox">
+        <summary id="prodSum">Produits (liste)</summary>
+        <div class="importBody">
+          <p class="hint">Écris tes produits une fois. Ensuite, dans une vente, tu choisis le produit, et la clôture te montre combien tu as vendu de chaque produit. Avec la Google Sheet, les agents voient la même liste.</p>
+          <div id="prodList" class="chips"></div>
+          <label class="field"><span>Nouveau produit</span><input id="prodName" autocomplete="off" maxlength="40" placeholder="Ex : Pain, Lait, Gâteaux"></label>
+          <p class="err" id="prodErr" role="alert" hidden></p>
+          <button class="ghost" id="prodAdd" type="button">Ajouter le produit</button>
         </div>
       </details>
       <details class="import" id="connBox">
@@ -345,6 +372,10 @@ button{cursor:pointer}
           <span>Fond de départ de la semaine</span>
           <input id="fond" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Fond de départ en DH">
         </div>
+        <div id="fondSaveBox" hidden style="display:flex;flex-direction:column;gap:6px;padding-block:8px">
+          <button class="ghost" id="fondSave" type="button">Enregistrer le fond pour les agents</button>
+          <p class="hint" id="fondState" role="status" style="margin:0"></p>
+        </div>
         <div class="lrow plus"><span>+ Ventes en espèces</span><b id="lVentes">0,00</b></div>
         <div class="lrow plus"><span>+ Règlements de crédit en espèces</span><b id="lRg">0,00</b></div>
         <div class="lrow minus"><span>− Charges payées en espèces</span><b id="lCharges">0,00</b></div>
@@ -366,7 +397,6 @@ button{cursor:pointer}
         <div class="lrow plus"><span>Ventes encaissées (hors crédit)</span><b id="rVentes">0,00</b></div>
         <div class="lrow plus"><span>+ Règlements de crédit reçus</span><b id="rRg">0,00</b></div>
         <div class="lrow minus"><span>− Charges (tous modes)</span><b id="rCharges">0,00</b></div>
-        <div class="lrow minus"><span>− Fond de départ de la semaine</span><b id="rFond">0,00</b></div>
         <div class="lrow total"><span>Bénéfice de la semaine</span><b id="rNet">0,00</b></div>
         <p class="hint" id="rCredHint"></p>
         <div class="lrow">
@@ -406,17 +436,32 @@ button{cursor:pointer}
         <h2>Jour par jour</h2>
         <div class="xscroll">
           <table class="dtable">
-            <thead><tr><th>Jour</th><th>Calculé</th><th>Encaissé</th><th>Charges</th></tr></thead>
+            <thead><tr><th>Jour</th><th>CA total</th><th>Encaissé</th><th>Charges</th><th>Espèces</th></tr></thead>
             <tbody id="dayRows"></tbody>
             <tfoot id="dayFoot"></tfoot>
           </table>
         </div>
+        <p class="hint">CA total = toutes les ventes (crédit compris). Encaissé = ventes payées + règlements. Espèces = ventes + règlements − charges en espèces.</p>
+      </div>
+
+      <div class="card">
+        <h2>Ventes par produit</h2>
+        <div id="prodStats"></div>
       </div>
 
       <div class="card">
         <h2>Semaines clôturées</h2>
         <div id="history"></div>
       </div>
+    </section>
+
+    <section id="view-clients" role="tabpanel" aria-labelledby="tab-clients" hidden>
+      <div class="card" id="cliListCard">
+        <h2>Clients</h2>
+        <label class="field"><span>Chercher un client</span><input id="cliQ" autocomplete="off" placeholder="Écris un nom"></label>
+        <div id="cliList"><p class="muted">Chargement…</p></div>
+      </div>
+      <div class="card cdet" id="cliDet" hidden></div>
     </section>
 
     <section id="view-mois" role="tabpanel" aria-labelledby="tab-mois" hidden>
@@ -445,6 +490,10 @@ button{cursor:pointer}
       <div class="card">
         <h2>CA calculé par mode de paiement</h2>
         <div id="mModes"></div>
+      </div>
+      <div class="card">
+        <h2>Ventes par produit</h2>
+        <div id="mProdStats"></div>
       </div>
       <div class="card">
         <h2>Semaine par semaine</h2>
@@ -479,9 +528,14 @@ button{cursor:pointer}
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       Mois
     </button>
+    <button class="tab" id="tab-clients" role="tab" aria-selected="false" type="button" data-view="clients">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.4c2.2.7 3.5 2.6 3.5 5.6"/></svg>
+      Clients
+    </button>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="pop" id="pop" hidden role="alertdialog" aria-live="assertive" aria-labelledby="popT"><div><i id="popI">✓</i><b id="popT"></b><span id="popS"></span><button class="ghost" id="popOk" type="button" style="margin-top:8px;min-width:140px">OK</button></div></div>
 
 <script>
 (function(){
@@ -620,7 +674,7 @@ function makeDbStore(db){
 }
 /* Google Sheet (via le script Apps Script) : tout est lu avec une seule requête « list », rafraîchie toutes les 20 secondes. */
 function makeSheetStore(cfg){
-  var cache={ops:{},clients:{},clotures:{}},pending={},from=null,loaded=false,busy=false,again=false,inflight=0,started=false;
+  var cache={ops:{},clients:{},clotures:{},products:[]},seenIds=null,pending={},from=null,loaded=false,busy=false,again=false,inflight=0,started=false;
   var L={ops:[],clo:[],cr:[],cl:[]};
   var self={mode:'sheet',onOk:null,onErr:null};
   function copy(o){return Object.assign({},o)}
@@ -649,7 +703,12 @@ function makeSheetStore(cfg){
       var ops={};
       j.ops.forEach(function(o){ops[o.id]=o});
       Object.keys(pending).forEach(function(id){if(!ops[id]&&cache.ops[id])ops[id]=cache.ops[id]});
+      var fresh=[];
+      if(seenIds){j.ops.forEach(function(o){if(!seenIds[o.id]&&!pending[o.id]&&o.agent&&o.agent!==cfg.name&&o.ts>Date.now()-172800000)fresh.push(o)})}
+      seenIds=seenIds||{};j.ops.forEach(function(o){seenIds[o.id]=1});
+      cache.products=Array.isArray(j.products)?j.products:[];
       cache.ops=ops;cache.clients={};cache.clotures={};cache.fonds=j.fonds||{};
+      if(fresh.length&&self.onNew)setTimeout(function(){self.onNew(fresh)},0);
       j.clients.forEach(function(c){cache.clients[c.id]=c});
       j.clotures.forEach(function(c){cache.clotures[c.id]=c});
       loaded=true;
@@ -700,6 +759,10 @@ function makeSheetStore(cfg){
     });
   };
   self.fonds=function(){return Object.assign({},cache.fonds)};
+  self.products=function(){return cache.products.slice()};
+  self.setProducts=function(list){
+    return call('setProducts',{products:list}).then(function(j){cache.products=j.products||list;L.clo.slice().forEach(fireClo)});
+  };
   self.setFond=function(week,cents){
     return call('setFond',{week:week,fond:cents}).then(function(){cache.fonds[week]=cents});
   };
@@ -735,18 +798,18 @@ function isCurrent(){return state.week===weekStart(todayStr())}
 function summarize(ops,start,n){
   var r={v:0,c:0,vEsp:0,cEsp:0,vCr:0,rg:0,rgEsp:0,nv:0,nc:0,nrg:0,cancelled:0,byDay:{},byMode:{}},i;
   ALL_KEYS.forEach(function(k){r.byMode[k]={v:0,c:0}});
-  for(i=0;i<n;i++)r.byDay[addDays(start,i)]={v:0,c:0,r:0};
+  for(i=0;i<n;i++)r.byDay[addDays(start,i)]={v:0,c:0,r:0,vCr:0,rg:0,vEsp:0,rgEsp:0,cEsp:0,n:0};
   (ops||[]).forEach(function(o){
     if(o.cancelled){r.cancelled++;return}
     var m=modeOf(o),d=r.byDay[o.date];
     if(o.type==='vente'){
       r.v+=o.cents;r.nv++;r.byMode[m].v+=o.cents;if(m==='especes')r.vEsp+=o.cents;
       if(m==='credit')r.vCr+=o.cents;else if(d)d.r+=o.cents;
-      if(d)d.v+=o.cents;
+      if(d){d.v+=o.cents;d.n++;if(m==='credit')d.vCr+=o.cents;if(m==='especes')d.vEsp+=o.cents}
     }else if(o.type==='reglement'){
-      r.rg+=o.cents;r.nrg++;if(m==='especes')r.rgEsp+=o.cents;if(d)d.r+=o.cents;
+      r.rg+=o.cents;r.nrg++;if(m==='especes')r.rgEsp+=o.cents;if(d){d.r+=o.cents;d.rg+=o.cents;d.n++;if(m==='especes')d.rgEsp+=o.cents}
     }else{
-      r.c+=o.cents;r.nc++;r.byMode[m].c+=o.cents;if(m==='especes')r.cEsp+=o.cents;if(d)d.c+=o.cents;
+      r.c+=o.cents;r.nc++;r.byMode[m].c+=o.cents;if(m==='especes')r.cEsp+=o.cents;if(d){d.c+=o.cents;d.n++;if(m==='especes')d.cEsp+=o.cents}
     }
   });
   r.real=r.v-r.vCr+r.rg;
@@ -777,10 +840,17 @@ function weekMoves(ops){
 }
 
 /* ---------- messages ---------- */
+var popTm=null;
+function showPop(title,sub){
+  var q=$('pop');$('popT').textContent=title;$('popS').textContent=sub||'';
+  q.hidden=false;clearTimeout(popTm);popTm=setTimeout(function(){q.hidden=true},3000);
+}
 function toast(msg){
   var t=$('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2800);
 }
+var newCount=0;
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&newCount){newCount=0;document.title='Carnet de Caisse'}});
 function failMsg(e){
   var c=e&&e.code;
   if(c==='quota_exceeded')return 'La mémoire de l’application est pleine. Préviens le propriétaire.';
@@ -822,7 +892,12 @@ function renderSync(){
   else if(store.mode==='db'||store.mode==='sheet'){s.dataset.s='wait';s.textContent='Hors ligne'}
   else{s.dataset.s='local';s.textContent='Cet appareil'}
 }
+function updFondBox(){
+  var show=!!(store&&store.setFond&&state.ready&&state.canClose&&!state.clotures[state.week]);
+  var b=$('fondSaveBox');if(b){b.hidden=!show;if(!show)$('fondState').textContent=''}
+}
 function applyPerm(){
+  updFondBox();
   var can=state.ready&&state.canWrite,close=state.ready&&state.canClose;
   ['amount','label','date','clientQ'].forEach(function(id){$(id).disabled=!can});
   $('saveBtn').disabled=!can||busy;
@@ -860,7 +935,7 @@ function rowHtml(o,num){
     +'<div><div class="lbl">'+lbl+'</div>'
     +'<div class="meta"><span>'+hm+(hm?' · ':'')+tl+(a?' · '+esc(a):'')+'</span>'
     +(m==='credit'?'<span class="tag credit">Crédit</span>':(m!=='especes'||isR?'<span class="tag '+(isR?'rg':'mode')+'">'+MODES[m]+'</span>':''))
-    +(o.cancelled?'<span class="tag">Annulé'+(cb?' par '+esc(cb):'')+'</span>':'')+act+'</div></div>'
+    +(o.product?'<span class="tag mode">'+esc(o.product)+'</span>':'')+(o.cancelled?'<span class="tag">Annulé'+(cb?' par '+esc(cb):'')+'</span>':'')+act+'</div></div>'
     +'<div class="amt">'+(isV||isR?'+':'−')+fmt(o.cents)+'</div></li>';
 }
 var FKEYS=ALL_KEYS.concat(['reglement']);
@@ -915,20 +990,26 @@ function calc(){
   var retrait=(compte==null||next==null)?null:compte-next;
   return {s:s,fond:fond,theo:theo,compte:compte,ecart:ecart,next:next,retrait:retrait};
 }
+function recProfit(r){return (r.caReel!=null?r.caReel:r.ca)-r.charges}
 function modeBreakdown(s){
   var parts=[];
-  ALL_KEYS.forEach(function(k){if(s.byMode[k].v>0)parts.push(MODES[k]+' '+fmt(s.byMode[k].v))});
+  ALL_KEYS.forEach(function(k){
+    var v=s.byMode[k].v;
+    if(k==='credit')v=Math.max(0,v-s.rg);
+    if(v>0)parts.push(MODES[k]+' '+fmt(v));
+  });
+  if(s.rg>0)parts.push('Règlements reçus '+fmt(s.rg));
   return parts.join(' · ');
 }
 function renderCloture(){
   var c=calc(),s=c.s,rec=state.clotures[state.week];
-  var caNet=c.fond==null?null:s.real-s.c-c.fond;
+  var caNet=s.real-s.c;
   $('caNum').textContent=fmt(s.real);
   var bd=modeBreakdown(s);
   $('caSub').textContent='DH encaissés · '+s.nv+' vente'+(s.nv>1?'s':'')+(s.nrg?' · '+s.nrg+' règlement'+(s.nrg>1?'s':''):'');
   $('calcLine').textContent='(CA calculé : '+fmt(s.v)+' DH)';
   $('modesLine').textContent=bd;$('modesLine').hidden=!bd;
-  $('profitLine').textContent='Bénéfice de la semaine : '+(caNet==null?'—':fmtS(caNet)+' DH')+' (CA réel − charges − fond)';
+  $('profitLine').textContent='Bénéfice de la semaine : '+fmtS(caNet)+' DH (CA réel − charges)';
   $('lVentes').textContent='+ '+fmt(s.vEsp);
   $('lRg').textContent='+ '+fmt(s.rgEsp);
   $('lCharges').textContent='− '+fmt(s.cEsp);
@@ -946,9 +1027,9 @@ function renderCloture(){
   $('rVentes').textContent='+ '+fmt(s.v-s.vCr);
   $('rRg').textContent='+ '+fmt(s.rg);
   $('rCharges').textContent='− '+fmt(s.c);
-  $('rFond').textContent=c.fond==null?'—':'− '+fmt(c.fond);
-  $('rNet').textContent=c.fond==null?'—':fmtS(s.real-s.c-c.fond)+' DH';
-  $('rCredHint').textContent=s.vCr>0?'Ventes à crédit de la semaine, pas encore encaissées : '+fmt(s.vCr)+' DH.':'';
+  $('rNet').textContent=fmtS(s.real-s.c)+' DH';
+  var dueNow=state.credOps===null?null:totalDue(creditBook());
+  $('rCredHint').textContent=(s.vCr>0?'Ventes à crédit de cette semaine : '+fmt(s.vCr)+' DH. ':'')+(dueNow==null?'':'Reste à encaisser chez tous les clients (règlements déduits) : '+fmt(dueNow)+' DH.');
   var rb=$('retraitBox'),rn=rb.children[1],rd=rb.children[2];
   if(c.retrait==null){rb.dataset.state='none';rn.textContent='—';rd.textContent='Écris le cash compté et le fond de la semaine suivante.'}
   else if(c.retrait>=0){rb.dataset.state='retrait';rn.textContent=fmt(c.retrait)+' DH';rd.textContent='Retire ce montant du tiroir. Il reste '+fmt(c.next)+' DH comme fond de départ.'}
@@ -962,22 +1043,24 @@ function renderCloture(){
   if(rec&&rec.closedAt){var t=new Date(rec.closedAt);info.textContent='Clôture enregistrée le '+t.getDate()+' '+MONTHS[t.getMonth()]+' à '+pad(t.getHours())+':'+pad(t.getMinutes())+'.'}
   else info.textContent='Pas encore clôturée. Le fond de la semaine suivante est celui que tu décides ici.';
   // jour par jour
-  var max=0,i,rows='';
-  for(i=0;i<7;i++){var dd=s.byDay[addDays(state.week,i)];if(dd.v>max)max=dd.v}
+  var i,rows='',max=0,te=0;
+  for(i=0;i<7;i++){var d0=s.byDay[addDays(state.week,i)];if(d0.v>max)max=d0.v}
   for(i=0;i<7;i++){
-    var ds=addDays(state.week,i),x=s.byDay[ds],w=max?Math.round(x.v/max*100):0;
-    rows+='<tr><td>'+DAYS[i]+' '+parseYmd(ds).getUTCDate()+'</td><td class="bar" style="--w:'+w+'%">'+fmt(x.v)+'</td><td>'+fmt(x.r)+'</td><td class="ch">'+fmt(x.c)+'</td></tr>';
+    var ds=addDays(state.week,i),x=s.byDay[ds],w=max?Math.round(x.v/max*100):0,es=x.vEsp+x.rgEsp-x.cEsp;te+=es;
+    rows+='<tr><td>'+DAYS[i]+' '+parseYmd(ds).getUTCDate()+'</td><td class="bar" style="--w:'+w+'%">'+fmt(x.v)+'</td><td>'+fmt(x.r)+'</td><td class="ch">'+fmt(x.c)+'</td><td>'+fmtS(es)+'</td></tr>';
   }
   $('dayRows').innerHTML=rows;
-  $('dayFoot').innerHTML='<tr><td>Total</td><td>'+fmt(s.v)+'</td><td>'+fmt(s.real)+'</td><td>'+fmt(s.c)+'</td></tr>';
+  $('dayFoot').innerHTML='<tr><td>Total</td><td>'+fmt(s.v)+'</td><td>'+fmt(s.real)+'</td><td>'+fmt(s.c)+'</td><td>'+fmtS(te)+'</td></tr>';
+  $('prodStats').innerHTML=prodHtml(state.ops||[],state.prodFilter,'prodFilter');
   renderCredits();
   // semaines clôturées
   var recs=Object.keys(state.clotures).map(function(k){return state.clotures[k]}).sort(function(a,b){return a.week<b.week?1:-1}).slice(0,8);
   $('history').innerHTML=recs.length?recs.map(function(r){
-    return '<button type="button" class="hrow" data-week="'+esc(r.week)+'"><span class="hw"><b>Semaine '+isoWeek(r.week)+'</b><small>'+rangeLabel(r.week)+'</small></span><span class="hca">'+fmtS(r.caNet!=null?r.caNet:r.ca-r.charges-(r.fond||0))+'</span>'+pill(r.ecart)+'</button>';
+    return '<button type="button" class="hrow" data-week="'+esc(r.week)+'"><span class="hw"><b>Semaine '+isoWeek(r.week)+'</b><small>'+rangeLabel(r.week)+'</small></span><span class="hca">'+fmtS(recProfit(r))+'</span>'+pill(r.ecart)+'</button>';
   }).join(''):'<p class="muted">Les semaines clôturées apparaîtront ici, avec leur CA et leur écart.</p>';
 }
 function renderCredits(){
+  renderClients();
   var box=$('credits');
   if(state.credOps===null){box.innerHTML='<p class="muted">Chargement…</p>';return}
   var book=creditBook(),mv=weekMoves(state.ops);
@@ -986,14 +1069,93 @@ function renderCredits(){
   var html=list.map(function(b){
     var w=mv[b.id],cls=b.due>0?'due':(b.due<0?'adv':''),amt=b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due)+' DH':'Soldé');
     var wl=[];if(w){if(w.cr)wl.push('+'+fmt(w.cr)+' crédit');if(w.rg)wl.push('−'+fmt(w.rg)+' réglé')}
-    var hist=b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)}).slice(0,30).map(function(o){
+    var pris=0,paye=0;b.ops.forEach(function(o){if(o.type==='reglement')paye+=o.cents;else pris+=o.cents});
+    var hist='<li class="csum"><span>Pris à crédit <b>'+fmt(pris)+'</b></span><span>Payé <b>'+fmt(paye)+'</b></span><span>'+(pris-paye<0?'Avance':'Reste')+' <b>'+fmt(pris-paye)+'</b></span></li>'+b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)}).slice(0,60).map(function(o){
       var r=o.type==='reglement';
-      return '<li><span>'+dShort(o.date)+' · '+(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.label?' · '+esc(o.label):'')+'</span><b>'+(r?'−':'+')+fmt(o.cents)+'</b></li>';
+      return '<li><span>'+dShort(o.date)+' · '+(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.label?' · '+esc(o.label):'')+(o.agent?' · '+esc(o.agent):'')+'</span><b>'+(r?'−':'+')+fmt(o.cents)+'</b></li>';
     }).join('');
     return '<details class="crow '+cls+'"><summary><span class="cn">'+esc(b.name||'Client')+(wl.length?'<small>Cette semaine : '+wl.join(' · ')+'</small>':'')+'</span><b>'+amt+'</b></summary><ul>'+hist+'</ul></details>';
   }).join('');
   html+='<div class="lrow total"><span>Total des crédits en cours</span><b>'+fmt(totalDue(book))+' DH</b></div>';
   box.innerHTML=html;
+}
+function clientOps(b){return b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)||(y.date<x.date?-1:1)})}
+function renderClients(){
+  var lc=$('cliList');if(!lc)return;
+  if(state.credOps===null){lc.innerHTML='<p class="muted">Chargement…</p>';return}
+  var book=creditBook(),all={};
+  clientsSorted().forEach(function(c){all[c.id]={id:c.id,name:c.name,due:0,ops:[]}});
+  Object.keys(book).forEach(function(k){all[k]=book[k]});
+  var qk=nameKey(state.cliQ||''),list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){return b.name&&(!qk||nameKey(b.name).indexOf(qk)>=0)}).sort(function(a,b){return b.due-a.due||(a.name<b.name?-1:1)});
+  var sel=state.cliSel&&all[state.cliSel]?all[state.cliSel]:null;
+  $('cliListCard').hidden=!!sel;$('cliDet').hidden=!sel;
+  if(sel){
+    var pris=0,paye=0;sel.ops.forEach(function(o){if(o.type==='reglement')paye+=o.cents;else pris+=o.cents});
+    var rest=pris-paye;
+    $('cliDet').innerHTML='<button type="button" class="linkbtn" data-cli-back="1">← Tous les clients</button><h2>'+esc(sel.name)+'</h2>'
+      +'<div class="lrow"><span>Pris à crédit</span><b>'+fmt(pris)+' DH</b></div><div class="lrow"><span>Déjà payé</span><b>'+fmt(paye)+' DH</b></div><div class="lrow total"><span>'+(rest<0?'Avance':'Reste à payer')+'</span><b>'+fmt(rest)+' DH</b></div>'
+      +'<div class="actions"><button class="primary" type="button" data-cli-pay="'+esc(sel.id)+'">Enregistrer un règlement</button></div>'
+      +(sel.ops.length?'<ul>'+clientOps(sel).slice(0,200).map(function(o){var r=o.type==='reglement';return '<li><span>'+dShort(o.date)+' · '+(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+esc(o.product):'')+(o.label?' · '+esc(o.label):'')+(o.agent?' · '+esc(o.agent):'')+'</span><b>'+(r?'−':'+')+fmt(o.cents)+'</b></li>'}).join('')+'</ul>':'<p class="muted">Aucun mouvement pour ce client.</p>');
+    return;
+  }
+  lc.innerHTML=list.length?list.map(function(b){var cls=b.due>0?'due':(b.due<0?'adv':'');return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'</span><b>'+(b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due):'Soldé'))+'</b></button>'}).join(''):'<p class="muted">'+(qk?'Aucun client de ce nom.':'Aucun client pour l’instant. Ils apparaissent quand tu fais une vente à crédit.')+'</p>';
+}
+/* ---------- produits ---------- */
+var LP_KEY='carnet-products-v1';
+function getProducts(){
+  if(store&&store.products)return store.products();
+  try{var a=JSON.parse(localStorage.getItem(LP_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}
+}
+function saveProducts(list){
+  if(store&&store.setProducts)return store.setProducts(list);
+  try{localStorage.setItem(LP_KEY,JSON.stringify(list))}catch(e){}
+  return Promise.resolve();
+}
+function cleanProduct(s){return String(s==null?'':s).replace(/\s+/g,' ').trim().slice(0,40)}
+function renderProductSelect(){
+  var type=document.querySelector('input[name=type]:checked').value,list=getProducts(),box=$('productBox'),sel=$('product');
+  box.hidden=type!=='vente';
+  var sig=list.join('|');
+  if(sel.dataset.sig!==sig){
+    var cur=sel.value;
+    sel.innerHTML='<option value="">— Sans produit —</option>'+list.map(function(p){return '<option value="'+esc(p)+'">'+esc(p)+'</option>'}).join('');
+    sel.dataset.sig=sig;if(list.indexOf(cur)>=0)sel.value=cur;
+  }
+}
+function renderProdManager(){
+  var list=getProducts(),can=!store||!store.setProducts||state.canClose;
+  $('prodSum').textContent='Produits (liste)'+(list.length?' · '+list.length:'');
+  $('prodList').innerHTML=list.length?list.map(function(p){return '<span class="chip">'+esc(p)+(can?' <button type="button" class="mini" data-prod-del="'+esc(p)+'" aria-label="Retirer '+esc(p)+'">×</button>':'')+'</span>'}).join(''):'<p class="muted">Aucun produit pour l’instant.</p>';
+  $('prodName').disabled=!can;$('prodAdd').disabled=!can;
+}
+function prodKey(o){return o.product?o.product:''}
+function prodStats(ops){
+  var by={},tot=0,n=0;
+  (ops||[]).forEach(function(o){
+    if(o.cancelled||o.type!=='vente')return;
+    var k=prodKey(o),b=by[k]||(by[k]={name:k,v:0,n:0,byMode:{}});
+    b.v+=o.cents;b.n++;tot+=o.cents;n++;
+    var m=modeOf(o);b.byMode[m]=(b.byMode[m]||0)+o.cents;
+  });
+  var list=Object.keys(by).map(function(k){return by[k]}).sort(function(a,b){return b.v-a.v});
+  return {list:list,tot:tot,n:n};
+}
+function prodHtml(ops,sel,idBase){
+  var st=prodStats(ops);
+  if(!st.list.length)return '<p class="muted">Aucune vente.</p>';
+  var names=st.list.map(function(b){return b.name});
+  var opts='<option value="__all"'+(sel==='__all'||!sel?' selected':'')+'>Tous les produits</option>'+names.map(function(k){return '<option value="'+esc(k)+'"'+(sel===k&&sel!=='__all'?' selected':'')+'>'+esc(k||'Sans produit')+'</option>'}).join('');
+  var html='<label class="field"><span>Filtrer par produit</span><select id="'+idBase+'">'+opts+'</select></label>';
+  var shown=(sel&&sel!=='__all')?st.list.filter(function(b){return b.name===sel}):st.list;
+  html+='<div class="xscroll"><table class="dtable"><thead><tr><th>Produit</th><th>Ventes</th><th>Montant</th><th>%</th></tr></thead><tbody>'+shown.map(function(b){
+    return '<tr><td>'+esc(b.name||'Sans produit')+'</td><td>'+b.n+'</td><td>'+fmt(b.v)+'</td><td>'+(st.tot?Math.round(b.v/st.tot*100):0)+'</td></tr>';
+  }).join('')+'</tbody><tfoot><tr><td>'+(shown.length===st.list.length?'Total':'Sélection')+'</td><td>'+shown.reduce(function(a,b){return a+b.n},0)+'</td><td>'+fmt(shown.reduce(function(a,b){return a+b.v},0))+'</td><td></td></tr></tfoot></table></div>';
+  if(shown.length===1){
+    var b=shown[0],parts=[];
+    ALL_KEYS.forEach(function(k){if(b.byMode[k])parts.push(MODES[k]+' '+fmt(b.byMode[k]))});
+    html+='<p class="hint">'+esc(b.name||'Sans produit')+' : '+parts.join(' · ')+'</p>';
+  }
+  return html;
 }
 function needsClient(){
   var type=document.querySelector('input[name=type]:checked').value,mode=document.querySelector('input[name=mode]:checked').value;
@@ -1076,13 +1238,15 @@ function renderMois(){
     var v=s.byMode[k].v;
     if(v>0)rows+='<div class="lrow plus"><span>'+MODES[k]+(k==='credit'?' (non encaissé)':'')+'<small>'+Math.round(v/s.v*100)+' %</small></span><b>'+fmt(v)+'</b></div>';
   });
+  $('mProdStats').innerHTML=state.mOps===null?'<p class="muted">Chargement…</p>':prodHtml(state.mOps,state.mProdFilter,'mProdFilter');
   $('mModes').innerHTML=rows||'<p class="muted">Aucune vente ce mois-ci.</p>';
   $('mWeeks').innerHTML=m.weeks.map(function(w){
     return '<tr><td>'+weekRowLabel(w)+'</td><td>'+fmt(w.r)+'</td><td>'+fmt(w.v)+'</td><td class="ch">'+fmt(w.c)+'</td></tr>';
   }).join('');
 }
-function renderAll(){renderHeader();renderBons();renderCloture();renderMois()}
+function renderAll(){renderHeader();renderBons();renderCloture();renderMois();renderProductSelect();renderProdManager()}
 function syncInputs(force){
+  updFondBox();
   if(state.dirty&&!force)return;
   var rec=state.clotures[state.week],prev=state.clotures[addDays(state.week,-7)];
   var fd=state.fonds&&state.fonds[state.week];
@@ -1094,11 +1258,11 @@ function syncInputs(force){
 }
 function setView(v){
   state.view=v;
-  ['bons','cloture','mois'].forEach(function(n){
+  ['bons','cloture','mois','clients'].forEach(function(n){
     $('view-'+n).hidden=n!==v;
     $('tab-'+n).setAttribute('aria-selected',n===v?'true':'false');
   });
-  $('weekbar').hidden=v==='mois';
+  $('weekbar').hidden=v==='mois'||v==='clients';
   if(v==='mois'&&store&&mSubKey!==state.month)subscribeMonth();
   window.scrollTo(0,0);
 }
@@ -1111,6 +1275,7 @@ function refreshForm(){
   var f=$('bonForm');f.dataset.type=type;
   $('saveBtn').textContent=type==='vente'?(mode==='credit'?'Enregistrer la vente à crédit':'Enregistrer la vente'):(type==='reglement'?'Enregistrer le règlement':'Enregistrer la charge');
   $('chips').hidden=type!=='charge';
+  renderProductSelect();
   var need=type==='charge'||(type==='vente'&&mode!=='especes'&&mode!=='credit');
   $('labelCap').textContent=type==='charge'?'Détail de la charge (obligatoire)':(type==='reglement'?'Note (facultatif)':(need?'Client ou référence (obligatoire)':'Détail (facultatif)'));
   $('label').placeholder=type==='charge'?'Ex : fournisseur, facture électricité':(type==='reglement'?'Ex : reste à payer le mois prochain':(need?'Ex : Mme Alaoui, virement du 11/10':'Ex : 2 pains, 1 lait'));
@@ -1158,8 +1323,8 @@ function weekReport(){
     'CA calculé (toutes les ventes) : '+fmt(s.v)+' DH'];
   ALL_KEYS.forEach(function(k){if(s.byMode[k].v>0)l.push('  dont '+MODES[k].toLowerCase()+' : '+fmt(s.byMode[k].v)+' DH')});
   if(s.rg>0)l.push('Règlements de crédit reçus : '+fmt(s.rg)+' DH');
-  l.push('Charges : '+fmt(s.c)+' DH','Fond de départ : '+(c.fond==null?'—':fmt(c.fond)+' DH'),
-    'Bénéfice de la semaine (CA réel − charges − fond) : '+(c.fond==null?'—':fmtS(s.real-s.c-c.fond)+' DH'),
+  l.push('Charges : '+fmt(s.c)+' DH','Bénéfice de la semaine (CA réel − charges) : '+fmtS(s.real-s.c)+' DH',
+    'Fond de départ : '+(c.fond==null?'—':fmt(c.fond)+' DH'),
     'Cash attendu (espèces) : '+(c.theo==null?'—':fmtS(c.theo)+' DH'),
     'Cash compté : '+(c.compte==null?'—':fmt(c.compte)+' DH'));
   if(c.ecart!=null)l.push('Écart : '+(c.ecart===0?'caisse juste':(c.ecart<0?'manque ':'surplus ')+fmt(c.ecart)+' DH'));
@@ -1169,6 +1334,8 @@ function weekReport(){
     var cb=creditBook(),cl=Object.keys(cb).map(function(k){return cb[k]}).filter(function(b){return b.due>0}).sort(function(a,b){return b.due-a.due});
     if(cl.length){l.push('','Crédits clients en cours :');cl.forEach(function(b){l.push('  '+b.name+' : '+fmt(b.due)+' DH')});l.push('  Total : '+fmt(totalDue(cb))+' DH')}
   }
+  var ps=prodStats(state.ops||[]);
+  if(ps.list.length&&(ps.list.length>1||ps.list[0].name)){l.push('','Ventes par produit :');ps.list.forEach(function(b){l.push('  '+(b.name||'Sans produit')+' : '+fmt(b.v)+' DH ('+b.n+' vente'+(b.n>1?'s':'')+')')})}
   if(s.cancelled)l.push('Bons annulés : '+s.cancelled);
   var note=$('note').value.trim();
   if(note)l.push('Note : '+note);
@@ -1180,6 +1347,8 @@ function monthReport(){
   ALL_KEYS.forEach(function(k){if(s.byMode[k].v>0)l.push('  dont '+MODES[k].toLowerCase()+' : '+fmt(s.byMode[k].v)+' DH')});
   if(s.rg>0)l.push('Règlements de crédit reçus : '+fmt(s.rg)+' DH');
   l.push('Charges : '+fmt(s.c)+' DH','Résultat (CA réel − charges) : '+fmtS(s.real-s.c)+' DH','');
+  var pm=prodStats(state.mOps||[]);
+  if(pm.list.length&&(pm.list.length>1||pm.list[0].name)){l.push('Ventes par produit :');pm.list.forEach(function(b){l.push('  '+(b.name||'Sans produit')+' : '+fmt(b.v)+' DH ('+b.n+' vente'+(b.n>1?'s':'')+')')});l.push('')}
   m.weeks.forEach(function(w){l.push(weekRowLabel(w)+' : CA réel '+fmt(w.r)+' · calculé '+fmt(w.v)+' · charges '+fmt(w.c))});
   return l.join('\n');
 }
@@ -1244,8 +1413,7 @@ function weekExport(){
     {l:'règlements de crédit reçus',v:s.rg,sub:true},
     {l:'CA calculé (toutes les ventes, crédit compris)',v:s.v}].concat(modeLines(s),[
     {l:'Charges (tous modes de paiement)',v:-s.c},
-    {l:'Fond de départ de la semaine',v:c.fond==null?null:-c.fond},
-    {l:'Bénéfice de la semaine (CA réel - charges - fond)',v:c.fond==null?null:s.real-s.c-c.fond,b:true}])};
+    {l:'Bénéfice de la semaine (CA réel - charges)',v:s.real-s.c,b:true}])};
   var sec2={title:'Caisse en espèces',rows:[
     {l:'Fond de départ',v:c.fond},
     {l:'+ Ventes en espèces',v:s.vEsp},
@@ -1282,11 +1450,11 @@ function monthExport(){
   var recs=Object.keys(state.clotures).map(function(k){return state.clotures[k]}).filter(function(r){return r.week<=end&&addDays(r.week,6)>=start}).sort(function(a,b){return a.week<b.week?-1:1});
   if(recs.length){
     tables.push({title:'Clôtures de semaine',sheet:'Clôtures',
-      head:['Semaine','Du','Au','Bénéfice (ventes - charges - fond)','Ventes','Charges','Fond de départ','Cash compté','Écart','Fond suivant','À retirer'],
+      head:['Semaine','Du','Au','Bénéfice (CA réel - charges)','Ventes','Charges','Fond de départ','Cash compté','Écart','Fond suivant','À retirer'],
       body:recs.map(function(r){return ['Sem. '+isoWeek(r.week),dFull(r.week),dFull(addDays(r.week,6)),
-        mm(r.caNet!=null?r.caNet:r.ca-r.charges-(r.fond||0)),mm(r.ca),mm(r.charges),mm(r.fond),mm(r.compte),mm(r.ecart),mm(r.fondSuivant),mm(r.aRetirer)]}),
+        mm(recProfit(r)),mm(r.ca),mm(r.charges),mm(r.fond),mm(r.compte),mm(r.ecart),mm(r.fondSuivant),mm(r.aRetirer)]}),
       xw:[12,12,12,18,14,14,14,14,12,14,14],freeze:1,
-      pdf:{cols:[0,3,8,10],head:['Semaine','Bénéfice (ventes - charges - fond)','Écart','À retirer'],widths:[0,160,80,80],right:[1,2,3]}});
+      pdf:{cols:[0,3,8,10],head:['Semaine','Bénéfice (CA réel - charges)','Écart','À retirer'],widths:[0,160,80,80],right:[1,2,3]}});
   }
   var info=['Le résultat du mois est CA réel - charges. Le CA réel compte l’argent encaissé : ventes payées + règlements de crédit reçus. Le fond de départ est déduit dans les clôtures de semaine.'];
   if(s.cancelled)info.push(s.cancelled+' bon'+(s.cancelled>1?'s':'')+' annulé'+(s.cancelled>1?'s':'')+', non compté'+(s.cancelled>1?'s':'')+' dans les totaux.');
@@ -1626,6 +1794,15 @@ function init(){
   });
   document.querySelectorAll('input[name=type],input[name=mode]').forEach(function(r){r.addEventListener('change',refreshForm)});
   document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){setView(t.dataset.view)})});
+  $('popOk').addEventListener('click',function(){$('pop').hidden=true;$('amount').focus()});
+  $('cliQ').addEventListener('input',function(){state.cliQ=this.value;renderClients()});
+  $('view-clients').addEventListener('click',function(e){
+    var b;
+    if((b=e.target.closest('[data-cli]'))){state.cliSel=b.dataset.cli;renderClients();window.scrollTo(0,0)}
+    else if(e.target.closest('[data-cli-back]')){state.cliSel=null;renderClients();window.scrollTo(0,0)}
+    else if((b=e.target.closest('[data-cli-pay]'))){var id=b.dataset.cliPay;setView('bons');$('t-reglement').checked=true;refreshForm();pickClient(id);$('amount').focus()}
+  });
+  $('prodManage').addEventListener('click',function(){var d=$('prodBox');d.open=true;d.scrollIntoView({block:'center'})});
   $('wkPrev').addEventListener('click',function(){setWeek(addDays(state.week,-7))});
   $('wkNext').addEventListener('click',function(){if(!isCurrent())setWeek(addDays(state.week,7))});
   $('wkToday').addEventListener('click',function(){setWeek(weekStart(todayStr()))});
@@ -1724,11 +1901,12 @@ function init(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayStr()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
     var op={type:type,mode:mode,cents:cents,label:label,date:date,ts:Date.now(),cancelled:false};
     if(cl){op.client=state.formClient;op.clientName=cl.name;op.cr=1}
+    if(type==='vente'&&!$('productBox').hidden&&$('product').value)op.product=$('product').value;
     if(state.me)op.by=state.me;else if(store.mode==='sheet')op.agent=state.myName;
     busy=true;applyPerm();
     store.addOp(op).then(function(){
       $('amount').value='';$('label').value='';state.formClient=null;$('clientQ').value='';renderClientPicker();
-      toast((type==='vente'?'Vente':(type==='reglement'?'Règlement':'Charge'))+' enregistré'+(type==='charge'||type==='vente'?'e':'')+' : '+fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:''));
+      showPop((type==='vente'?'Vente enregistrée':(type==='reglement'?'Règlement enregistré':'Charge enregistrée'))+' ✓',fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:''));
       var w=weekStart(date);
       if(w!==state.week)setWeek(w);
       $('amount').focus();
@@ -1750,14 +1928,41 @@ function init(){
     renderBons();
   });
 
+  $('prodAdd').addEventListener('click',addProduct);
+  $('prodName').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addProduct()}});
+  $('prodList').addEventListener('click',function(e){
+    var b=e.target.closest('[data-prod-del]');if(!b)return;
+    var name=b.dataset.prodDel;
+    saveProducts(getProducts().filter(function(p){return p!==name})).then(function(){renderProdManager();renderProductSelect();toast('Produit retiré de la liste. Les anciens bons le gardent.')}).catch(function(x){toast(failMsg(x))});
+  });
+  function addProduct(){
+    var er=$('prodErr'),n=cleanProduct($('prodName').value);er.hidden=true;
+    if(n.length<2){er.textContent='Écris le nom du produit (2 lettres au minimum).';er.hidden=false;return}
+    var list=getProducts();
+    if(list.some(function(p){return p.toLowerCase()===n.toLowerCase()})){er.textContent='Ce produit existe déjà.';er.hidden=false;return}
+    if(list.length>=60){er.textContent='La liste est pleine (60 produits).';er.hidden=false;return}
+    saveProducts(list.concat([n])).then(function(){$('prodName').value='';renderProdManager();renderProductSelect();toast('Produit ajouté : '+n)}).catch(function(x){er.textContent=failMsg(x);er.hidden=false});
+  }
+  $('prodStats').addEventListener('change',function(e){if(e.target.id==='prodFilter'){state.prodFilter=e.target.value;renderCloture()}});
+  $('mProdStats').addEventListener('change',function(e){if(e.target.id==='mProdFilter'){state.mProdFilter=e.target.value;renderMois()}});
   /* le propriétaire fixe le fond de départ sans clôturer : les agents voient tout de suite le tiroir */
-  $('fond').addEventListener('change',function(){
+  function saveFond(){
+    var st=$('fondState');
     if(!store||!store.setFond||!state.canClose||state.clotures[state.week])return;
     var raw=$('fond').value.trim(),cents=raw===''?null:parseMoney(raw);
-    if(cents==null||cents<0)return;
-    var wk=state.week;
-    store.setFond(wk,cents).then(function(){if(!state.fonds)state.fonds={};state.fonds[wk]=cents;toast('Fond enregistré : les agents voient le tiroir')}).catch(function(x){toast(failMsg(x))});
-  });
+    if(cents==null||cents<0){st.textContent='Écris un montant pour le fond (0 s’il n’y en a pas).';return}
+    var wk=state.week;st.textContent='Enregistrement…';
+    store.setFond(wk,cents).then(function(){
+      if(!state.fonds)state.fonds={};state.fonds[wk]=cents;
+      st.textContent='✓ Fond de '+fmt(cents)+' DH enregistré. Les agents le voient maintenant.';
+      toast('Fond enregistré : les agents voient le tiroir');
+    }).catch(function(x){
+      var msg=(x&&x.code==='action')?'Ton script Google n’est pas à jour : remplace Code.gs par la dernière version, puis Déployer, Gérer les déploiements, Nouvelle version.':failMsg(x);
+      st.textContent='✗ '+msg;toast(msg);
+    });
+  }
+  $('fond').addEventListener('change',saveFond);
+  $('fondSave').addEventListener('click',saveFond);
   $('closeBtn').addEventListener('click',function(){
     if(!store||!state.canClose||savingClo||state.ops===null)return;
     var c=calc();
@@ -1766,7 +1971,7 @@ function init(){
     if(c.next==null){toast('Écris le fond de départ de la semaine suivante (0 s’il n’y en a pas).');$('fondNext').focus();return}
     var s=c.s;
     var due=state.credOps===null?null:totalDue(creditBook());
-    var rec={week:state.week,fond:c.fond,compte:c.compte,ca:s.v,caReel:s.real,vCredit:s.vCr,reglements:s.rg,creditDu:due,caNet:s.real-s.c-c.fond,caEsp:s.vEsp,charges:s.c,chargesEsp:s.cEsp,theorique:c.theo,ecart:c.ecart,fondSuivant:c.next,aRetirer:c.retrait,nbVentes:s.nv,nbCharges:s.nc,note:$('note').value.trim().slice(0,300),closedAt:Date.now()};
+    var rec={week:state.week,fond:c.fond,compte:c.compte,ca:s.v,caReel:s.real,vCredit:s.vCr,reglements:s.rg,creditDu:due,caNet:s.real-s.c,caEsp:s.vEsp,charges:s.c,chargesEsp:s.cEsp,theorique:c.theo,ecart:c.ecart,fondSuivant:c.next,aRetirer:c.retrait,nbVentes:s.nv,nbCharges:s.nc,note:$('note').value.trim().slice(0,300),closedAt:Date.now()};
     if(state.me)rec.closedBy=state.me;
     savingClo=true;applyPerm();
     store.saveCloture(state.week,rec).then(function(){
@@ -1856,6 +2061,12 @@ async function boot(){
   if(conn){
     store=makeSheetStore(conn);state.myName=conn.name||'Propriétaire';
     store.onErr=onStoreErr;
+    store.onNew=function(list){
+      var o=list[0],t=o.type==='vente'?'Vente':(o.type==='reglement'?'Règlement':'Charge');
+      toast('Nouveau bon · '+(o.agent||'Agent')+' · '+t+' '+fmt(o.cents)+' DH'+(o.clientName?' · '+o.clientName:'')+(list.length>1?' (+'+(list.length-1)+' autre'+(list.length>2?'s':'')+')':''));
+      try{if(navigator.vibrate)navigator.vibrate(200)}catch(e){}
+      newCount+=list.length;document.title='('+newCount+') Carnet de Caisse';
+    };
     store.onOk=function(){if(state.offline||state.authFail){state.offline=false;state.authFail=false;renderSync();applyPerm()}};
     if(hasClaude){try{dlNs=await window.claude.use('downloads')}catch(e){dlNs=null}}
   }else{
@@ -1883,6 +2094,7 @@ async function boot(){
   store.subscribeClotures(function(rows){
     state.clotures={};rows.forEach(function(r){state.clotures[r.id]=r});
     state.fonds=store.fonds?store.fonds():{};
+    renderProductSelect();renderProdManager();
     syncInputs(false);renderCloture();
   },onStoreErr);
   store.subscribeClients(function(rows){
