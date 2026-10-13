@@ -4,9 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Carnet de Caisse</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="theme-color" content="#1b7a4c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caisse">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 html{-webkit-text-size-adjust:100%}body{margin:0}
+.inst{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-block-start:16px;display:flex;flex-direction:column;gap:10px}.inst h2{margin:0;font-size:1rem}.inst p{margin:0;color:var(--ink-2);font-size:.88rem}.inst .actions{margin-block-start:0}
 
 /* Layout: phone-first ledger. Sticky week bar on top, three tabs (Bons, Clôture, Mois) switched from a bottom bar, one column up to 640px. */
 :root{
@@ -199,6 +207,12 @@ button{cursor:pointer}
 .pop i{font-style:normal;width:56px;height:56px;border-radius:50%;background:var(--ok);color:#fff;font-size:2rem;line-height:56px;font-weight:700}
 .pop b{font-family:var(--f-display);font-size:1.2rem}
 .pop span{color:var(--ink-2);font-size:.92rem}
+.dayclo{list-style:none;margin:10px 0 0;padding:0}.dayclo li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:.9rem}.dayclo small{display:block;color:var(--ink-2);font-size:.78rem}.dayclo b:last-child{font-family:var(--f-mono);white-space:nowrap}
+.dlg{position:fixed;inset:0;z-index:30;background:rgba(8,12,28,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 14px 20px;overflow:auto}
+.dlg[hidden]{display:none}
+.dlg>div{width:min(100%,460px);margin-block:auto;background:var(--surface);color:var(--ink);border-radius:16px;padding:20px 18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px -10px rgba(0,0,0,.5)}
+.dlg h2{margin:0;font-size:1.1rem}
+.dlg .acts{display:flex;gap:10px;flex-wrap:wrap}
 .linkbtn{background:none;border:0;color:var(--ink-2);text-decoration:underline;padding:6px 0;text-align:left;font:inherit;font-size:.85rem;cursor:pointer;align-self:flex-start}
 .cli{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:52px;text-align:left;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:var(--ink);cursor:pointer}
 .cli:first-of-type{border-top:0}.cli b{font-family:var(--f-mono);white-space:nowrap}.cli.due b{color:var(--charge)}.cli.adv b{color:var(--ok)}
@@ -245,6 +259,14 @@ button{cursor:pointer}
 
   <main>
     <section id="view-bons" role="tabpanel" aria-labelledby="tab-bons">
+      <section class="inst" id="installCard" hidden>
+        <h2>Installer l'application</h2>
+        <p id="installText"></p>
+        <div class="actions">
+          <button class="primary" id="installBtn" type="button" hidden style="--btn:var(--vente)">Installer</button>
+          <button class="ghost" id="installHide" type="button">Plus tard</button>
+        </div>
+      </section>
       <form class="entry" id="bonForm" data-type="vente" novalidate>
         <div class="seg" role="radiogroup" aria-label="Type de bon">
           <input type="radio" name="type" id="t-vente" value="vente" checked><label for="t-vente">Vente</label>
@@ -342,7 +364,7 @@ button{cursor:pointer}
 
     <section id="view-cloture" role="tabpanel" aria-labelledby="tab-cloture" hidden>
       <div class="hero">
-        <div class="eyebrow">CA réel de la semaine</div>
+        <div class="eyebrow">Bénéfice de la semaine</div>
         <div class="big" id="caNum">0,00</div>
         <div class="sub" id="caSub">DH encaissés</div>
         <div class="sub" id="calcLine"></div>
@@ -351,8 +373,9 @@ button{cursor:pointer}
       </div>
       <p class="notice" id="lockNote" hidden>Seul le propriétaire fixe le fond de caisse et clôture la semaine. Tu peux consulter les chiffres.</p>
 
+
       <div class="card">
-        <h2>Caisse en espèces</h2>
+        <h2>Caisse du jour (espèces)</h2>
         <div class="lrow">
           <span>Fond de départ de la semaine</span>
           <input id="fond" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Fond de départ en DH">
@@ -374,6 +397,14 @@ button{cursor:pointer}
           <span class="n">—</span>
           <span>Compte l'argent dans le tiroir et écris le montant pour voir l'écart.</span>
         </div>
+        <div class="ecart" id="retraitBox" data-state="none" aria-live="polite">
+          <span class="t">À retirer du tiroir</span>
+          <span class="n">—</span>
+          <span>Écris le cash compté dans le tiroir.</span>
+        </div>
+        <div class="actions"><button class="primary" id="dayClose" type="button">Clôturer la journée</button></div>
+        <p class="hint" id="dayInfo"></p>
+        <div id="dayCloList"></div>
         <p class="notice" id="cancelNote" hidden></p>
       </div>
 
@@ -384,15 +415,9 @@ button{cursor:pointer}
         <div class="lrow minus"><span>− Charges (tous modes)</span><b id="rCharges">0,00</b></div>
         <div class="lrow total"><span>Bénéfice de la semaine</span><b id="rNet">0,00</b></div>
         <p class="hint" id="rCredHint"></p>
-        <div class="lrow">
-          <span>Fond de départ de la semaine suivante</span>
-          <input id="fondNext" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Fond de départ de la semaine suivante en DH">
-        </div>
-        <div class="ecart" id="retraitBox" data-state="none" aria-live="polite">
-          <span class="t">À retirer de la caisse</span>
-          <span class="n">—</span>
-          <span>Écris le cash compté et le fond de la semaine suivante.</span>
-        </div>
+        <div class="lrow total"><span>Espèces totales de la semaine</span><b id="rEsp">0,00</b></div>
+        <p class="hint">Espèces = ventes + règlements − charges payées en espèces, sans le fond de départ.</p>
+        <div class="lrow minus" id="rRetRow" hidden><span>Déjà retiré du tiroir (clôtures de journée)</span><b id="rRet">0,00</b></div>
         <p class="notice" id="changedNote" hidden></p>
         <label class="field" style="margin-block-start:14px">
           <span>Note (facultatif)</span>
@@ -456,7 +481,7 @@ button{cursor:pointer}
         <button class="nav" id="mNext" type="button" aria-label="Mois suivant"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div class="hero">
-        <div class="eyebrow">CA réel du mois</div>
+        <div class="eyebrow">Bénéfice du mois</div>
         <div class="big" id="mCa">0,00</div>
         <div class="sub" id="mCaSub">DH</div>
         <div class="sub" id="mCalcLine"></div>
@@ -520,6 +545,16 @@ button{cursor:pointer}
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="dlg" id="editDlg" hidden role="dialog" aria-modal="true" aria-labelledby="edT"><div>
+  <h2 id="edT">Modifier le bon</h2>
+  <label class="field"><span>Montant</span><div class="money"><input id="edAmount" inputmode="decimal" autocomplete="off" placeholder="0,00"><i>DH</i></div></label>
+  <label class="field"><span>Mode de paiement</span><select id="edMode"></select></label>
+  <label class="field" id="edClientBox"><span>Client</span><select id="edClient"></select></label>
+  <label class="field" id="edProdBox"><span>Produit</span><select id="edProduct"></select></label>
+  <label class="field"><span id="edLabelCap">Détail</span><input id="edLabel" maxlength="120" autocomplete="off"></label>
+  <p class="err" id="edErr" role="alert" hidden></p>
+  <div class="acts"><button class="primary" id="edSave" type="button">Enregistrer</button><button class="ghost" id="edCancel" type="button">Annuler</button></div>
+</div></div>
 <div class="pop" id="pop" hidden role="alertdialog" aria-live="assertive" aria-labelledby="popT"><div><i id="popI">✓</i><b id="popT"></b><span id="popS"></span><button class="ghost" id="popOk" type="button" style="margin-top:8px;min-width:140px">OK</button></div></div>
 
 <script>
@@ -583,6 +618,12 @@ function b64e(str){var bytes=new TextEncoder().encode(str),bin='',i;for(i=0;i<by
 function isCreditOp(o){return o.type==='reglement'||(o.type==='vente'&&o.mode==='credit')}
 
 /* ---------- stockage : db partagée, sinon cet appareil ---------- */
+function applyEdit(o,p){
+  o.mode=p.mode;o.cents=p.cents;o.label=p.label;
+  if(p.product)o.product=p.product;else delete o.product;
+  if(p.cr){o.client=p.client;o.clientName=p.clientName;o.cr=1}else{delete o.client;delete o.clientName;delete o.cr}
+  o.editedAt=Date.now();
+}
 function makeLocalStore(){
   var KEY='carnet-caisse-v1',data={ops:[],clotures:{},clients:{}},opL=[],cloL=[],crL=[],clL=[];
   try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.ops)){data=p;if(!data.clotures)data.clotures={};if(!data.clients)data.clients={}}}}catch(e){}
@@ -623,6 +664,11 @@ function makeLocalStore(){
       data.ops.push(Object.assign({id:id},op));
       save();fire(opL);fire(crL);return Promise.resolve();
     },
+    editOp:function(id,patch){
+      var o=data.ops.find(function(x){return x.id===id});
+      if(o){applyEdit(o,patch)}
+      save();fire(opL);fire(crL);return Promise.resolve();
+    },
     setCancelled:function(id,v){
       var o=data.ops.find(function(x){return x.id===id});
       if(o){o.cancelled=v}
@@ -631,6 +677,14 @@ function makeLocalStore(){
     saveCloture:function(week,rec){
       data.clotures[week]=Object.assign({},rec,{id:week});
       save();fire(cloL);return Promise.resolve();
+    },
+    setFond:function(week,cents){
+      data.clotures['fond-'+week]={kind:'fond',week:week,fond:cents,id:'fond-'+week};
+      save();fire(cloL);return Promise.resolve();
+    },
+    closeDay:function(rec){
+      data.clotures['day-'+rec.at]=Object.assign({},rec,{kind:'day',id:'day-'+rec.at});
+      save();fire(cloL);return Promise.resolve(rec);
     }
   };
 }
@@ -649,17 +703,20 @@ function makeDbStore(db){
     addOp:function(op){return ops.add(op)},
     hasOp:function(id){return ops.doc(id).get().then(function(s){return s.exists})},
     addOpWithId:function(id,op){return ops.doc(id).set(op)},
+    editOp:function(id,patch){return ops.doc(id).update(Object.assign({},patch,{editedAt:Date.now()}))},
     setCancelled:function(id,v,by){
       var patch={cancelled:v,cancelledAt:Date.now()};
       if(by)patch.cancelledBy=by;
       return ops.doc(id).update(patch);
     },
-    saveCloture:function(week,rec){return db.doc('clotures/'+week).set(rec)}
+    saveCloture:function(week,rec){return db.doc('clotures/'+week).set(rec)},
+    setFond:function(week,cents){return db.doc('clotures/fond-'+week).set({kind:'fond',week:week,fond:cents})},
+    closeDay:function(rec){return db.doc('clotures/day-'+rec.at).set(Object.assign({},rec,{kind:'day'})).then(function(){return rec})}
   };
 }
 /* Google Sheet (via le script Apps Script) : tout est lu avec une seule requête « list », rafraîchie toutes les 20 secondes. */
 function makeSheetStore(cfg){
-  var cache={ops:{},clients:{},clotures:{},products:[]},seenIds=null,pending={},from=null,loaded=false,busy=false,again=false,inflight=0,started=false;
+  var cache={ops:{},clients:{},clotures:{},products:[],days:[]},seenIds=null,pending={},from=null,loaded=false,busy=false,again=false,inflight=0,started=false;
   var L={ops:[],clo:[],cr:[],cl:[]};
   var self={mode:'sheet',onOk:null,onErr:null};
   function copy(o){return Object.assign({},o)}
@@ -673,7 +730,7 @@ function makeSheetStore(cfg){
   }
   function keys(m){return Object.keys(m).map(function(k){return m[k]})}
   function fireOps(l){l.cb(keys(cache.ops).filter(function(o){return o.date>=l.start&&o.date<=l.end}).map(copy))}
-  function fireClo(x){x.cb(keys(cache.clotures).map(copy))}
+  function fireClo(x){x.cb(keys(cache.clotures).map(copy).concat(cache.days.map(function(d){return Object.assign({},d,{kind:'day'})})))}
   function fireCr(x){x.cb(keys(cache.ops).filter(function(o){return o.cr===1}).map(copy))}
   function fireCl(x){x.cb(keys(cache.clients).map(copy))}
   function fireAll(){
@@ -691,7 +748,7 @@ function makeSheetStore(cfg){
       var fresh=[];
       if(seenIds){j.ops.forEach(function(o){if(!seenIds[o.id]&&!pending[o.id]&&o.agent&&o.agent!==cfg.name&&o.ts>Date.now()-172800000)fresh.push(o)})}
       seenIds=seenIds||{};j.ops.forEach(function(o){seenIds[o.id]=1});
-      cache.products=Array.isArray(j.products)?j.products:[];
+      cache.products=Array.isArray(j.products)?j.products:[];cache.days=Array.isArray(j.days)?j.days:[];
       cache.ops=ops;cache.clients={};cache.clotures={};cache.fonds=j.fonds||{};
       if(fresh.length&&self.onNew)setTimeout(function(){self.onNew(fresh)},0);
       j.clients.forEach(function(c){cache.clients[c.id]=c});
@@ -733,6 +790,12 @@ function makeSheetStore(cfg){
       .then(function(j){delete pending[id];return j});
   };
   self.addOp=function(op){return self.addOpWithId('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),op)};
+  self.editOp=function(id,patch){
+    var o=cache.ops[id],prev=o?Object.assign({},o):null;
+    return write('editOp',{id:id,patch:{mode:patch.mode,cents:patch.cents,label:patch.label,product:patch.product,client:patch.client,clientName:patch.clientName},by:cfg.name||''},
+      function(){if(o)applyEdit(o,patch)},
+      function(){if(o){Object.keys(o).forEach(function(k){delete o[k]});Object.assign(o,prev)}});
+  };
   self.setCancelled=function(id,v,by){
     var o=cache.ops[id],prev=o?o.cancelled:false;
     return write('cancel',{id:id,v:!!v,by:by||cfg.name||''},function(){if(o)o.cancelled=!!v},function(){if(o)o.cancelled=prev});
@@ -741,6 +804,11 @@ function makeSheetStore(cfg){
     return call('saveCloture',{week:week,rec:rec}).then(function(){
       cache.clotures[week]=Object.assign({},rec,{id:week});
       L.clo.slice().forEach(fireClo);
+    });
+  };
+  self.closeDay=function(rec){
+    return call('closeDay',{counted:rec.counted,date:rec.date,by:cfg.name||''}).then(function(j){
+      cache.days.push(j.day);L.clo.slice().forEach(fireClo);refresh();return j.day;
     });
   };
   self.fonds=function(){return Object.assign({},cache.fonds)};
@@ -775,11 +843,19 @@ var fileDl={save:function(r){
 }};
 
 /* ---------- état ---------- */
-var state={view:'bons',week:weekStart(todayStr()),month:monthKey(todayStr()),ops:null,mOps:null,credOps:null,clients:{},formClient:null,clotures:{},fonds:{},dirty:false,
+var state={view:'bons',week:weekStart(todayStr()),month:monthKey(todayStr()),ops:null,mOps:null,credOps:null,clients:{},formClient:null,clotures:{},fonds:{},days:[],userWeek:false,dirty:false,
   canWrite:true,canClose:true,ready:false,armed:null,offline:false,filter:'all',me:null,names:{}};
-var store=null,userNs=null,dlNs=null,unsubOps=null,unsubM=null,mSubKey=null,armT=null,toastT=null,busy=false,savingClo=false;
+var savingDay=false,store=null,userNs=null,dlNs=null,unsubOps=null,unsubM=null,mSubKey=null,armT=null,toastT=null,busy=false,savingClo=false;
 
-function isCurrent(){return state.week===weekStart(todayStr())}
+function byName(b){return (!b||/^u_/.test(b))?'Propriétaire':b}
+function dayRecs(){return state.days||[]}
+function lastDay(){var d=dayRecs();return d.length?d[d.length-1]:null}
+/* journée de travail : après une clôture de journée, les nouveaux bons comptent pour le jour suivant */
+function workDate(){var t=todayStr(),l=lastDay();return (l&&l.date>=t)?addDays(l.date,1):t}
+function weekDayRecs(){var ws=state.week,we=addDays(ws,6);return dayRecs().filter(function(d){return d.date>=ws&&d.date<=we})}
+function cycleAt(){var m=0;weekDayRecs().forEach(function(d){if((d.at||0)>m)m=d.at});return m}
+function cycleOps(){var at=cycleAt();return (state.ops||[]).filter(function(o){return (o.ts||0)>at})}
+function isCurrent(){return state.week===weekStart(workDate())}
 function summarize(ops,start,n){
   var r={v:0,c:0,vEsp:0,cEsp:0,vCr:0,rg:0,rgEsp:0,nv:0,nc:0,nrg:0,cancelled:0,byDay:{},byMode:{}},i;
   ALL_KEYS.forEach(function(k){r.byMode[k]={v:0,c:0}});
@@ -878,7 +954,7 @@ function renderSync(){
   else{s.dataset.s='local';s.textContent='Cet appareil'}
 }
 function updFondBox(){
-  var show=!!(store&&store.setFond&&state.ready&&state.canClose&&!state.clotures[state.week]);
+  var show=!!(store&&store.setFond&&state.ready&&state.canClose);
   var b=$('fondSaveBox');if(b){b.hidden=!show;if(!show)$('fondState').textContent=''}
 }
 function applyPerm(){
@@ -886,8 +962,9 @@ function applyPerm(){
   var can=state.ready&&state.canWrite,close=state.ready&&state.canClose;
   ['amount','label','date','clientQ'].forEach(function(id){$(id).disabled=!can});
   $('saveBtn').disabled=!can||busy;
-  ['fond','compte','fondNext','note'].forEach(function(id){$(id).disabled=!close});
+  ['fond','compte','note'].forEach(function(id){$(id).disabled=!close});
   $('closeBtn').disabled=!close||savingClo;
+  $('dayClose').disabled=!close||savingDay||!isCurrent();
   document.querySelectorAll('input[name=type],input[name=mode]').forEach(function(r){r.disabled=!can});
   document.querySelectorAll('.chip').forEach(function(c){c.disabled=!can});
   ['importText','importCheck','importGo'].forEach(function(id){$(id).disabled=!can});
@@ -910,7 +987,7 @@ function rowHtml(o,num){
   var a=o.agent?String(o.agent):who(o.by),act='';
   if(state.canWrite&&state.ready){
     var armed=state.armed===o.id&&!o.cancelled;
-    act='<button type="button" class="mini'+(armed?' arm':'')+'" data-act="toggle" data-id="'+esc(o.id)+'">'+(o.cancelled?'Rétablir':(armed?'Confirmer l’annulation ?':'Annuler'))+'</button>';
+    act=(o.cancelled?'':'<button type="button" class="mini" data-act="edit" data-id="'+esc(o.id)+'">Modifier</button>')+'<button type="button" class="mini'+(armed?' arm':'')+'" data-act="toggle" data-id="'+esc(o.id)+'">'+(o.cancelled?'Rétablir':(armed?'Confirmer l’annulation ?':'Annuler'))+'</button>';
   }
   var cb=o.cancelled?who(o.cancelledBy):'';
   var tl=isR?'Règlement':(isV?'Vente':'Charge');
@@ -920,7 +997,7 @@ function rowHtml(o,num){
     +'<div><div class="lbl">'+lbl+'</div>'
     +'<div class="meta"><span>'+hm+(hm?' · ':'')+tl+(a?' · '+esc(a):'')+'</span>'
     +(m==='credit'?'<span class="tag credit">Crédit</span>':(m!=='especes'||isR?'<span class="tag '+(isR?'rg':'mode')+'">'+MODES[m]+'</span>':''))
-    +(o.product?'<span class="tag mode">'+esc(o.product)+'</span>':'')+(o.cancelled?'<span class="tag">Annulé'+(cb?' par '+esc(cb):'')+'</span>':'')+act+'</div></div>'
+    +(o.product?'<span class="tag mode">'+esc(o.product)+'</span>':'')+(o.editedAt?'<span class="tag mode">Modifié</span>':'')+(o.cancelled?'<span class="tag">Annulé'+(cb?' par '+esc(cb):'')+'</span>':'')+act+'</div></div>'
     +'<div class="amt">'+(isV||isR?'+':'−')+fmt(o.cents)+'</div></li>';
 }
 var FKEYS=ALL_KEYS.concat(['reglement']);
@@ -966,14 +1043,14 @@ function pill(e){
   return e<0?'<span class="pill bad">−'+fmt(e)+'</span>':'<span class="pill warn">+'+fmt(e)+'</span>';
 }
 function calc(){
-  var s=weekSummary(state.ops||[]);
+  var s=weekSummary(state.ops||[]),cs=summarize(cycleOps(),state.week,7);
   var fr=$('fond').value.trim(),fond=fr===''?0:parseMoney(fr);
-  var theo=fond==null?null:fond+s.vEsp+s.rgEsp-s.cEsp;
+  var theo=fond==null?null:fond+cs.vEsp+cs.rgEsp-cs.cEsp;
   var cr=$('compte').value.trim(),compte=cr===''?null:parseMoney(cr);
   var ecart=(theo==null||compte==null)?null:compte-theo;
-  var nr=$('fondNext').value.trim(),next=nr===''?null:parseMoney(nr);
-  var retrait=(compte==null||next==null)?null:compte-next;
-  return {s:s,fond:fond,theo:theo,compte:compte,ecart:ecart,next:next,retrait:retrait};
+  var retrait=(compte==null||fond==null)?null:compte-fond;
+  var dl=weekDayRecs(),ret=0,ect=0;dl.forEach(function(d){ret+=d.retire||0;ect+=d.ecart||0});
+  return {s:s,cs:cs,fond:fond,theo:theo,compte:compte,ecart:ecart,next:fond,retrait:retrait,esp:s.vEsp+s.rgEsp-s.cEsp,days:dl,retire:ret,ecartTot:ect};
 }
 function recProfit(r){return (r.caReel!=null?r.caReel:r.ca)-r.charges}
 function modeBreakdown(s){
@@ -989,15 +1066,16 @@ function modeBreakdown(s){
 function renderCloture(){
   var c=calc(),s=c.s,rec=state.clotures[state.week];
   var caNet=s.real-s.c;
-  $('caNum').textContent=fmt(s.real);
+  $('caNum').textContent=fmtS(caNet);
   var bd=modeBreakdown(s);
-  $('caSub').textContent='DH encaissés · '+s.nv+' vente'+(s.nv>1?'s':'')+(s.nrg?' · '+s.nrg+' règlement'+(s.nrg>1?'s':''):'');
-  $('calcLine').textContent='(CA calculé : '+fmt(s.v)+' DH)';
+  $('caSub').textContent='DH · CA réel − charges · '+s.nv+' vente'+(s.nv>1?'s':'')+(s.nrg?' · '+s.nrg+' règlement'+(s.nrg>1?'s':''):'');
+  $('calcLine').textContent='CA réel (encaissé) : '+fmt(s.real)+' DH · CA calculé : '+fmt(s.v)+' DH';
   $('modesLine').textContent=bd;$('modesLine').hidden=!bd;
-  $('profitLine').textContent='Bénéfice de la semaine : '+fmtS(caNet)+' DH (CA réel − charges)';
-  $('lVentes').textContent='+ '+fmt(s.vEsp);
-  $('lRg').textContent='+ '+fmt(s.rgEsp);
-  $('lCharges').textContent='− '+fmt(s.cEsp);
+  $('profitLine').hidden=true;
+  var cs=c.cs;
+  $('lVentes').textContent='+ '+fmt(cs.vEsp);
+  $('lRg').textContent='+ '+fmt(cs.rgEsp);
+  $('lCharges').textContent='− '+fmt(cs.cEsp);
   $('lTheo').textContent=c.theo==null?'—':fmtS(c.theo)+' DH';
   var box=$('ecartBox'),n=box.children[1],d=box.children[2];
   if(c.fond==null){box.dataset.state='none';n.textContent='—';d.textContent='Le fond de départ n’est pas un montant valide.'}
@@ -1016,9 +1094,17 @@ function renderCloture(){
   var dueNow=state.credOps===null?null:totalDue(creditBook());
   $('rCredHint').textContent=(s.vCr>0?'Ventes à crédit de cette semaine : '+fmt(s.vCr)+' DH. ':'')+(dueNow==null?'':'Reste à encaisser chez tous les clients (règlements déduits) : '+fmt(dueNow)+' DH.');
   var rb=$('retraitBox'),rn=rb.children[1],rd=rb.children[2];
-  if(c.retrait==null){rb.dataset.state='none';rn.textContent='—';rd.textContent='Écris le cash compté et le fond de la semaine suivante.'}
-  else if(c.retrait>=0){rb.dataset.state='retrait';rn.textContent=fmt(c.retrait)+' DH';rd.textContent='Retire ce montant du tiroir. Il reste '+fmt(c.next)+' DH comme fond de départ.'}
-  else{rb.dataset.state='manque';rn.textContent='Il manque '+fmt(c.retrait)+' DH';rd.textContent='Le tiroir contient moins que le fond prévu pour la semaine suivante.'}
+  if(c.retrait==null){rb.dataset.state='none';rn.textContent=c.fond==null?'—':fmt(c.theo-c.fond)+' DH';rd.textContent='Attendu : '+(c.theo==null?'—':fmt(c.theo-c.fond)+' DH')+' à retirer. Écris le cash compté pour confirmer.'}
+  else if(c.retrait>=0){rb.dataset.state='retrait';rn.textContent=fmt(c.retrait)+' DH';rd.textContent='Retire ce montant du tiroir. Il reste '+fmt(c.fond)+' DH comme fond de départ.'}
+  else{rb.dataset.state='manque';rn.textContent='Il manque '+fmt(c.retrait)+' DH';rd.textContent='Le tiroir contient moins que le fond de départ.'}
+  $('rEsp').textContent=fmtS(c.esp)+' DH';
+  $('rRetRow').hidden=!c.days.length;$('rRet').textContent='− '+fmt(c.retire);
+  var ld=lastDay(),wd=workDate();
+  $('dayInfo').textContent='Journée en cours : '+dShort(wd)+' · Après la clôture, les nouveaux bons comptent pour le jour suivant et la caisse repart à zéro avec le même fond.'+(ld?' Dernière clôture : '+dShort(ld.date)+' à '+(function(t){return pad(t.getHours())+':'+pad(t.getMinutes())})(new Date(ld.at))+'.':'');
+  $('dayCloList').innerHTML=c.days.length?'<ul class="dayclo">'+c.days.slice().reverse().map(function(d){
+    var t=new Date(d.at);
+    return '<li><span><b>'+dShort(d.date)+'</b> · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(byName(d.by))+'<small>compté '+fmt(d.counted)+' · écart '+(d.ecart?fmtS(d.ecart):'0,00')+'</small></span><b>retiré '+fmtS(d.retire)+'</b></li>';
+  }).join('')+'</ul>':'';
   var ch=$('changedNote');
   if(rec&&state.ops&&(rec.ca!==s.v||rec.charges!==s.c||(rec.caReel!=null&&rec.caReel!==s.real))){
     ch.hidden=false;ch.textContent='Des bons ont changé depuis la clôture (CA réel enregistré '+fmt(rec.caReel!=null?rec.caReel:rec.ca)+', maintenant '+fmt(s.real)+'). Compte à nouveau puis mets à jour la clôture.';
@@ -1026,7 +1112,7 @@ function renderCloture(){
   $('closeBtn').textContent=rec?'Mettre à jour la clôture':'Enregistrer la clôture';
   var info=$('closeInfo');
   if(rec&&rec.closedAt){var t=new Date(rec.closedAt);info.textContent='Clôture enregistrée le '+t.getDate()+' '+MONTHS[t.getMonth()]+' à '+pad(t.getHours())+':'+pad(t.getMinutes())+'.'}
-  else info.textContent='Pas encore clôturée. Le fond de la semaine suivante est celui que tu décides ici.';
+  else info.textContent='Semaine pas encore clôturée. Les clôtures de journée se font dans « Caisse du jour ».';
   // jour par jour
   var i,rows='',max=0,te=0;
   for(i=0;i<7;i++){var d0=s.byDay[addDays(state.week,i)];if(d0.v>max)max=d0.v}
@@ -1207,9 +1293,9 @@ function renderMois(){
   $('mLabel').textContent=monthName(m.key);
   $('mSub').textContent=m.key===monthKey(todayStr())?'Mois en cours':'';
   $('mNext').disabled=m.key>=monthKey(todayStr());
-  $('mCa').textContent=state.mOps===null?'…':fmt(s.real);
-  $('mCaSub').textContent=state.mOps===null?'Chargement…':'DH encaissés · '+s.nv+' vente'+(s.nv>1?'s':'')+(s.nrg?' · '+s.nrg+' règlement'+(s.nrg>1?'s':''):'');
-  $('mCalcLine').textContent=state.mOps===null?'':'(CA calculé : '+fmt(s.v)+' DH)';
+  $('mCa').textContent=state.mOps===null?'…':fmtS(s.real-s.c);
+  $('mCaSub').textContent=state.mOps===null?'Chargement…':'DH · CA réel − charges · '+s.nv+' vente'+(s.nv>1?'s':'')+(s.nrg?' · '+s.nrg+' règlement'+(s.nrg>1?'s':''):'');
+  $('mCalcLine').textContent=state.mOps===null?'':'CA réel (encaissé) : '+fmt(s.real)+' DH · CA calculé : '+fmt(s.v)+' DH';
   $('mV').textContent=fmt(s.v);
   $('mCred').textContent='− '+fmt(s.vCr);
   $('mRg').textContent='+ '+fmt(s.rg);
@@ -1221,8 +1307,10 @@ function renderMois(){
   var rows='';
   ALL_KEYS.forEach(function(k){
     var v=s.byMode[k].v;
-    if(v>0)rows+='<div class="lrow plus"><span>'+MODES[k]+(k==='credit'?' (non encaissé)':'')+'<small>'+Math.round(v/s.v*100)+' %</small></span><b>'+fmt(v)+'</b></div>';
+    if(k==='credit')v=Math.max(0,v-s.rg);
+    if(v>0)rows+='<div class="lrow plus"><span>'+(k==='credit'?'Crédit restant à encaisser':MODES[k])+'<small>'+Math.round(v/s.v*100)+' %</small></span><b>'+fmt(v)+'</b></div>';
   });
+  if(s.rg>0)rows+='<div class="lrow plus"><span>Règlements de crédit reçus<small>'+Math.round(s.rg/s.v*100)+' %</small></span><b>'+fmt(s.rg)+'</b></div>';
   $('mProdStats').innerHTML=state.mOps===null?'<p class="muted">Chargement…</p>':prodHtml(state.mOps,state.mProdFilter,'mProdFilter');
   $('mModes').innerHTML=rows||'<p class="muted">Aucune vente ce mois-ci.</p>';
   $('mWeeks').innerHTML=m.weeks.map(function(w){
@@ -1235,10 +1323,11 @@ function syncInputs(force){
   if(state.dirty&&!force)return;
   var rec=state.clotures[state.week],prev=state.clotures[addDays(state.week,-7)];
   var fd=state.fonds&&state.fonds[state.week];
-  var fond=rec?rec.fond:(fd!=null?fd:(prev&&prev.fondSuivant!=null?prev.fondSuivant:null));
+  var pf=state.fonds&&state.fonds[addDays(state.week,-7)];
+  var wdl=weekDayRecs(),ldf=wdl.length?wdl[wdl.length-1].fond:null;
+  var fond=fd!=null?fd:(rec&&rec.fond!=null?rec.fond:(ldf!=null?ldf:(prev&&prev.fondSuivant!=null?prev.fondSuivant:(prev&&prev.fond!=null?prev.fond:(pf!=null?pf:null)))));
   $('fond').value=fond==null?'':toInput(fond);
-  $('compte').value=rec?toInput(rec.compte):'';
-  $('fondNext').value=rec&&rec.fondSuivant!=null?toInput(rec.fondSuivant):'';
+  if(force)$('compte').value='';
   $('note').value=rec&&rec.note?rec.note:'';
 }
 function setView(v){
@@ -1286,8 +1375,8 @@ function subscribeMonth(){
 }
 function setWeek(w){
   state.week=w;state.dirty=false;state.armed=null;
-  var t=todayStr(),we=addDays(w,6);
-  $('date').value=we<t?we:t;
+  var t=workDate(),we=addDays(w,6);
+  $('date').value=we<t?we:t;$('date').max=t;
   syncInputs(true);
   if(store)subscribeWeek();else renderAll();
 }
@@ -1309,12 +1398,10 @@ function weekReport(){
   ALL_KEYS.forEach(function(k){if(s.byMode[k].v>0)l.push('  dont '+MODES[k].toLowerCase()+' : '+fmt(s.byMode[k].v)+' DH')});
   if(s.rg>0)l.push('Règlements de crédit reçus : '+fmt(s.rg)+' DH');
   l.push('Charges : '+fmt(s.c)+' DH','Bénéfice de la semaine (CA réel − charges) : '+fmtS(s.real-s.c)+' DH',
+    'Espèces totales de la semaine : '+fmtS(c.esp)+' DH (ventes + règlements − charges en espèces)',
     'Fond de départ : '+(c.fond==null?'—':fmt(c.fond)+' DH'),
-    'Cash attendu (espèces) : '+(c.theo==null?'—':fmtS(c.theo)+' DH'),
-    'Cash compté : '+(c.compte==null?'—':fmt(c.compte)+' DH'));
-  if(c.ecart!=null)l.push('Écart : '+(c.ecart===0?'caisse juste':(c.ecart<0?'manque ':'surplus ')+fmt(c.ecart)+' DH'));
-  if(c.next!=null)l.push('Fond semaine suivante : '+fmt(c.next)+' DH');
-  if(c.retrait!=null)l.push('À retirer de la caisse : '+fmtS(c.retrait)+' DH');
+    'Cash attendu dans le tiroir en ce moment : '+(c.theo==null?'—':fmtS(c.theo)+' DH'));
+  if(c.days.length){l.push('Clôtures de journée :');c.days.forEach(function(d){l.push('  '+dShort(d.date)+' : compté '+fmt(d.counted)+' DH, écart '+(d.ecart?fmtS(d.ecart):'0,00')+' DH, retiré '+fmtS(d.retire)+' DH')})}
   if(state.credOps!==null){
     var cb=creditBook(),cl=Object.keys(cb).map(function(k){return cb[k]}).filter(function(b){return b.due>0}).sort(function(a,b){return b.due-a.due});
     if(cl.length){l.push('','Crédits clients en cours :');cl.forEach(function(b){l.push('  '+b.name+' : '+fmt(b.due)+' DH')});l.push('  Total : '+fmt(totalDue(cb))+' DH')}
@@ -1404,13 +1491,12 @@ function weekExport(){
     {l:'+ Ventes en espèces',v:s.vEsp},
     {l:'+ Règlements de crédit en espèces',v:s.rgEsp},
     {l:'- Charges payées en espèces',v:-s.cEsp},
-    {l:'Cash attendu dans le tiroir',v:c.theo,b:true},
-    {l:'Cash compté dans le tiroir',v:c.compte},
-    {l:'Écart (compté - attendu)',v:c.ecart,b:true},
-    {l:'Fond de départ de la semaine suivante',v:c.next},
-    {l:'À retirer de la caisse',v:c.retrait,b:true}]};
+    {l:'Espèces totales de la semaine',v:c.esp,b:true},
+    {l:'Déjà retiré du tiroir (clôtures de journée)',v:c.retire},
+    {l:'Écarts cumulés des clôtures de journée',v:c.ecartTot},
+    {l:'Cash attendu dans le tiroir en ce moment',v:c.theo,b:true}]};
   var info=[];
-  if(c.ecart!=null)info.push(c.ecart===0?'Caisse juste.':(c.ecart<0?'Manque ':'Surplus ')+fmt(c.ecart)+' DH par rapport aux bons.');
+  c.days.forEach(function(d){info.push('Clôture du '+dShort(d.date)+' : compté '+fmt(d.counted)+' DH, retiré '+fmtS(d.retire)+' DH, écart '+(d.ecart?fmtS(d.ecart):'0,00')+' DH.')});
   info.push(rec&&rec.closedAt?'Clôture enregistrée le '+stampLabel(rec.closedAt)+'.':'Clôture non enregistrée : chiffres affichés à l’écran au moment de l’export.');
   var note=$('note').value.trim();
   if(note)info.push('Note : '+note);
@@ -1736,9 +1822,42 @@ function showImportPreview(r){
 }
 
 /* ---------- init ---------- */
+/* ---------- installation (écran d'accueil) ---------- */
+var deferredInstall=null;
+function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
+function hideInstall(remember){
+  $('installCard').hidden=true;
+  if(remember){try{localStorage.setItem('carnet-caisse-hideinstall','1')}catch(e){}}
+}
+function setupInstall(){
+  var hidden=false;
+  try{hidden=localStorage.getItem('carnet-caisse-hideinstall')==='1'}catch(e){}
+  if(isStandalone()||hidden||location.protocol==='file:')return;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var txt=$('installText');
+  txt.textContent=ios?'Dans Safari, touche le bouton Partager, puis « Sur l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet de Caisse depuis son icône. Si tu as déjà un code de connexion, tu devras le coller une fois dans l\u2019application installée.':'Ouvre le menu du navigateur (trois points), puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ».';
+  $('installCard').hidden=false;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();deferredInstall=e;
+    txt.textContent='Installe Carnet de Caisse sur ton téléphone pour l\u2019ouvrir d\u2019un toucher.';
+    $('installBtn').hidden=false;
+  });
+  window.addEventListener('appinstalled',function(){hideInstall(true);toast('Application installée')});
+  $('installBtn').addEventListener('click',function(){
+    if(!deferredInstall)return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function(){deferredInstall=null;$('installBtn').hidden=true},function(){});
+  });
+  $('installHide').addEventListener('click',function(){hideInstall(true)});
+}
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+}
+
 function init(){
-  $('date').max=todayStr();
-  $('date').value=todayStr();
+  setupInstall();
+  $('date').max=workDate();
+  $('date').value=workDate();
   CHIPS.forEach(function(t){
     var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;
     b.addEventListener('click',function(){$('label').value=t;if(!$('amount').value)$('amount').focus();else $('label').focus()});
@@ -1747,6 +1866,7 @@ function init(){
   document.querySelectorAll('input[name=type],input[name=mode]').forEach(function(r){r.addEventListener('change',refreshForm)});
   document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){setView(t.dataset.view)})});
   $('popOk').addEventListener('click',function(){$('pop').hidden=true;$('amount').focus()});
+  $('date').addEventListener('input',function(){this.dataset.touched='1'});
   $('cliQ').addEventListener('input',function(){state.cliQ=this.value;renderClients()});
   $('view-clients').addEventListener('click',function(e){
     var b;
@@ -1755,12 +1875,12 @@ function init(){
     else if((b=e.target.closest('[data-cli-pay]'))){var id=b.dataset.cliPay;setView('bons');$('t-reglement').checked=true;refreshForm();pickClient(id);$('amount').focus()}
   });
   $('prodManage').addEventListener('click',function(){var d=$('prodBox');d.open=true;d.scrollIntoView({block:'center'})});
-  $('wkPrev').addEventListener('click',function(){setWeek(addDays(state.week,-7))});
-  $('wkNext').addEventListener('click',function(){if(!isCurrent())setWeek(addDays(state.week,7))});
-  $('wkToday').addEventListener('click',function(){setWeek(weekStart(todayStr()))});
+  $('wkPrev').addEventListener('click',function(){state.userWeek=true;setWeek(addDays(state.week,-7))});
+  $('wkNext').addEventListener('click',function(){state.userWeek=true;if(!isCurrent())setWeek(addDays(state.week,7))});
+  $('wkToday').addEventListener('click',function(){state.userWeek=true;setWeek(weekStart(workDate()))});
   $('mPrev').addEventListener('click',function(){setMonth(addMonth(state.month,-1))});
   $('mNext').addEventListener('click',function(){if(state.month<monthKey(todayStr()))setMonth(addMonth(state.month,1))});
-  ['fond','compte','fondNext','note'].forEach(function(id){$(id).addEventListener('input',function(){state.dirty=true;renderCloture()})});
+  ['fond','compte','note'].forEach(function(id){$(id).addEventListener('input',function(){state.dirty=true;renderCloture()})});
 
   $('connGo').addEventListener('click',async function(){
     var er=$('connErr'),u=$('connUrl').value.trim(),k=$('connKey').value.trim(),name=cleanName($('connName').value)||'Propriétaire';
@@ -1850,7 +1970,7 @@ function init(){
         if(cents>due){err('Ce client ne doit que '+fmt(due)+' DH. Vérifie le montant.',$('amount'));return}
       }
     }
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayStr()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>workDate()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
     var op={type:type,mode:mode,cents:cents,label:label,date:date,ts:Date.now(),cancelled:false};
     if(cl){op.client=state.formClient;op.clientName=cl.name;op.cr=1}
     if(type==='vente'&&!$('productBox').hidden&&$('product').value)op.product=$('product').value;
@@ -1865,6 +1985,62 @@ function init(){
     }).catch(function(x){err(failMsg(x))}).then(function(){busy=false;applyPerm()});
   });
 
+  var edId=null,edOp=null;
+  function edNeedClient(){var t=edOp.type,m=$('edMode').value;return t==='reglement'||(t==='vente'&&m==='credit')}
+  function edRefresh(){
+    var t=edOp.type,m=$('edMode').value,needLbl=t==='charge'||(t==='vente'&&m!=='especes'&&m!=='credit');
+    $('edClientBox').hidden=!edNeedClient();$('edProdBox').hidden=t!=='vente';
+    $('edLabelCap').textContent=t==='charge'?'Détail de la charge (obligatoire)':(needLbl?'Client ou référence (obligatoire)':'Détail (facultatif)');
+  }
+  function openEdit(id){
+    var o=(state.ops||[]).find(function(x){return x.id===id});
+    if(!o||o.cancelled||!store||!state.canWrite)return;
+    edId=id;edOp=o;
+    var m=modeOf(o),keys=o.type==='vente'?['especes','virement','cheque','credit']:['especes','virement','cheque'];
+    if(keys.indexOf(m)<0)keys.push(m);
+    $('edT').textContent='Modifier : '+(o.type==='vente'?'vente':(o.type==='reglement'?'règlement':'charge'));
+    $('edAmount').value=toInput(o.cents);
+    $('edMode').innerHTML=keys.map(function(k){return '<option value="'+k+'">'+MODES[k]+'</option>'}).join('');$('edMode').value=m;
+    var cl=clientsSorted();
+    if(o.client&&!cl.some(function(c){return c.id===o.client}))cl.push({id:o.client,name:o.clientName||'Client'});
+    $('edClient').innerHTML=cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
+    if(o.client)$('edClient').value=o.client;
+    var pl=getProducts().slice();if(o.product&&pl.indexOf(o.product)<0)pl.push(o.product);
+    $('edProduct').innerHTML='<option value="">— Sans produit —</option>'+pl.map(function(p){return '<option value="'+esc(p)+'">'+esc(p)+'</option>'}).join('');
+    $('edProduct').value=o.product||'';
+    $('edLabel').value=o.label||'';
+    $('edErr').hidden=true;edRefresh();
+    $('editDlg').hidden=false;$('edAmount').focus();
+  }
+  function closeEdit(){$('editDlg').hidden=true;edId=null;edOp=null}
+  $('edMode').addEventListener('change',edRefresh);
+  $('edCancel').addEventListener('click',closeEdit);
+  $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
+  $('edSave').addEventListener('click',function(){
+    if(!edOp)return;
+    var er=$('edErr');function err(m){er.textContent=m;er.hidden=false}
+    var cents=parseMoney($('edAmount').value),mode=$('edMode').value,t=edOp.type,label=$('edLabel').value.trim();
+    if(cents==null||cents<=0){err('Écris un montant supérieur à zéro.');return}
+    if(cents>1000000000){err('Montant trop grand.');return}
+    var needLbl=t==='charge'||(t==='vente'&&mode!=='especes'&&mode!=='credit');
+    if(needLbl&&!label){err(t==='charge'?'Écris le détail de la charge.':'Écris le client ou une référence pour ce mode de paiement.');return}
+    var needCl=edNeedClient(),cid=needCl?$('edClient').value:'',cname='';
+    if(needCl){
+      var c=state.clients[cid];cname=c?c.name:(edOp.clientName||'');
+      if(!cid||!cname){err('Choisis le client.');return}
+      if(t==='reglement'){
+        var bk=creditBook()[cid],due=(bk?bk.due:0)+((edOp.client===cid&&edOp.type==='reglement')?edOp.cents:0);
+        if(cents>due){err('Ce client ne doit que '+fmt(due)+' DH. Vérifie le montant.');return}
+      }
+    }
+    var patch={mode:mode,cents:cents,label:label.slice(0,120),product:t==='vente'?$('edProduct').value:'',client:cid,clientName:cname,cr:needCl?1:0};
+    $('edSave').disabled=true;
+    store.editOp(edId,patch).then(function(){closeEdit();showPop('Bon modifié ✓',fmt(cents)+' DH · '+MODES[mode]+(cname?' · '+cname:''))}).catch(function(x){err(failMsg(x))}).then(function(){$('edSave').disabled=false});
+  });
+  $('opsBox').addEventListener('click',function(e){
+    var eb=e.target.closest('[data-act="edit"]');
+    if(eb){openEdit(eb.dataset.id);return}
+  });
   $('opsBox').addEventListener('click',function(e){
     var btn=e.target.closest('[data-act="toggle"]');
     if(!btn||!store||!state.canWrite)return;
@@ -1900,7 +2076,7 @@ function init(){
   /* le propriétaire fixe le fond de départ sans clôturer : les agents voient tout de suite le tiroir */
   function saveFond(){
     var st=$('fondState');
-    if(!store||!store.setFond||!state.canClose||state.clotures[state.week])return;
+    if(!store||!store.setFond||!state.canClose)return;
     var raw=$('fond').value.trim(),cents=raw===''?null:parseMoney(raw);
     if(cents==null||cents<0){st.textContent='Écris un montant pour le fond (0 s’il n’y en a pas).';return}
     var wk=state.week;st.textContent='Enregistrement…';
@@ -1919,11 +2095,9 @@ function init(){
     if(!store||!state.canClose||savingClo||state.ops===null)return;
     var c=calc();
     if(c.fond==null){toast('Le fond de départ n’est pas un montant valide.');$('fond').focus();return}
-    if(c.compte==null){toast('Écris le cash compté pour enregistrer.');$('compte').focus();return}
-    if(c.next==null){toast('Écris le fond de départ de la semaine suivante (0 s’il n’y en a pas).');$('fondNext').focus();return}
     var s=c.s;
     var due=state.credOps===null?null:totalDue(creditBook());
-    var rec={week:state.week,fond:c.fond,compte:c.compte,ca:s.v,caReel:s.real,vCredit:s.vCr,reglements:s.rg,creditDu:due,caNet:s.real-s.c,caEsp:s.vEsp,charges:s.c,chargesEsp:s.cEsp,theorique:c.theo,ecart:c.ecart,fondSuivant:c.next,aRetirer:c.retrait,nbVentes:s.nv,nbCharges:s.nc,note:$('note').value.trim().slice(0,300),closedAt:Date.now()};
+    var rec={week:state.week,fond:c.fond,ca:s.v,caReel:s.real,vCredit:s.vCr,reglements:s.rg,creditDu:due,caNet:s.real-s.c,caEsp:s.vEsp,charges:s.c,chargesEsp:s.cEsp,espTotal:c.esp,theorique:c.fond+c.esp,compte:c.days.length?c.days[c.days.length-1].counted:null,ecart:c.ecartTot,fondSuivant:c.fond,aRetirer:c.retire,nbVentes:s.nv,nbCharges:s.nc,note:$('note').value.trim().slice(0,300),closedAt:Date.now()};
     if(state.me)rec.closedBy=state.me;
     savingClo=true;applyPerm();
     store.saveCloture(state.week,rec).then(function(){
@@ -1936,13 +2110,32 @@ function init(){
     }).then(function(){savingClo=false;applyPerm()});
   });
 
+  $('dayClose').addEventListener('click',function(){
+    if(!store||!state.canClose||savingDay||state.ops===null)return;
+    if(!isCurrent()){toast('La clôture de journée se fait sur la semaine en cours.');return}
+    var c=calc();
+    if(c.fond==null){toast('Le fond de départ n’est pas un montant valide.');$('fond').focus();return}
+    if(c.compte==null){toast('Écris le cash compté dans le tiroir.');$('compte').focus();return}
+    var at=Date.now(),rec={kind:'day',date:workDate(),at:at,by:state.myName||'Propriétaire',counted:c.compte,expected:c.theo,fond:c.fond,ecart:c.ecart,retire:c.retrait,vEsp:c.cs.vEsp,rgEsp:c.cs.rgEsp,cEsp:c.cs.cEsp};
+    savingDay=true;applyPerm();
+    store.closeDay(rec).then(function(d){
+      var r=d||rec;
+      $('compte').value='';state.dirty=false;
+      var dd=document.getElementById('date');if(dd){delete dd.dataset.touched;dd.value=workDate();dd.max=workDate()}
+      renderCloture();
+      showPop('Journée clôturée ✓','Retire '+fmtS(r.retire)+' DH du tiroir et laisse '+fmt(r.fond)+' DH. Les prochains bons comptent pour le '+dShort(workDate())+'.');
+    }).catch(function(x){
+      var m=(x&&x.code==='action')?'Ton script Google n’est pas à jour : remplace Code.gs, puis Déployer, Gérer les déploiements, Nouvelle version.':((x&&x.code==='nofond')?'Le fond de départ de la semaine n’est pas fixé : enregistre-le d’abord.':failMsg(x));
+      toast(m);
+    }).then(function(){savingDay=false;applyPerm()});
+  });
   $('copyBtn').addEventListener('click',function(){copyText(weekReport(),'reportBox')});
   $('mCopy').addEventListener('click',function(){copyText(monthReport(),'mReport')});
 
   $('view-cloture').addEventListener('click',function(e){
     if(e.target.id==='goBons'){setView('bons');return}
     var h=e.target.closest('.hrow');
-    if(h){setWeek(h.dataset.week);window.scrollTo(0,0)}
+    if(h){state.userWeek=true;setWeek(h.dataset.week);window.scrollTo(0,0)}
   });
 
   $('pdfWeek').addEventListener('click',function(){doExport('week','pdf')});
@@ -2044,8 +2237,13 @@ async function boot(){
   state.ready=true;
   renderSync();applyPerm();
   store.subscribeClotures(function(rows){
-    state.clotures={};rows.forEach(function(r){state.clotures[r.id]=r});
-    state.fonds=store.fonds?store.fonds():{};
+    state.clotures={};state.days=[];var fk={};
+    rows.forEach(function(r){if(r.kind==='day')state.days.push(r);else if(r.kind==='fond')fk[r.week]=r.fond;else state.clotures[r.id]=r});
+    state.days.sort(function(a,b){return (a.at||0)-(b.at||0)});
+    state.fonds=store.fonds?store.fonds():fk;
+    var ww=weekStart(workDate());
+    if(!state.userWeek&&ww!==state.week){setWeek(ww)}
+    else{var dt=$('date');if(dt&&!dt.dataset.touched){var tw=workDate(),we2=addDays(state.week,6);dt.value=we2<tw?we2:tw}if(dt)dt.max=workDate()}
     renderProductSelect();renderProdManager();
     syncInputs(false);renderCloture();
   },onStoreErr);
