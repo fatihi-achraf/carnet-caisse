@@ -258,13 +258,13 @@ button{cursor:pointer}
 .stb .ex{grid-column:1/-1;color:var(--ink-2);font-size:.76rem}
 .sthr{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;align-items:end;height:90px;margin-block-start:10px;border-bottom:1px solid var(--line)}
 .sthr>span{background:var(--vente);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
-.pmrow{display:grid;grid-template-columns:minmax(0,1fr) 64px 92px;gap:8px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
+.pmrow{display:grid;grid-template-columns:minmax(0,1fr) 52px 74px 80px;gap:8px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
 .pmrow:first-child{border-top:0}
 .pmrow .pn{display:flex;align-items:center;gap:8px;min-width:0;font-weight:600;overflow:hidden}
 .pmrow .pn input{width:22px;height:22px;flex:none}
 .pmrow .pn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pmrow input[type=text],.pmrow input:not([type]){width:100%;min-width:0;min-height:40px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-family:var(--f-mono)}
-.pmhead{display:grid;grid-template-columns:minmax(0,1fr) 64px 92px;gap:8px;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);font-weight:600}
+.pmhead{display:grid;grid-template-columns:minmax(0,1fr) 52px 74px 80px;gap:8px;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);font-weight:600}
 .orow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:11px 12px;border-top:1px solid var(--line)}
 .orow:first-child{border-top:0}.orow.off{opacity:.55}
 .orow .amt{font-family:var(--f-mono);font-weight:600;color:var(--vente);white-space:nowrap;text-align:right}
@@ -281,6 +281,11 @@ button{cursor:pointer}
 .ofl{display:flex;gap:8px;overflow-x:auto;padding-block:14px 2px;scrollbar-width:none}.ofl::-webkit-scrollbar{display:none}
 .ofl button{flex:none;min-height:44px;padding:0 16px;border:1.5px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink-2);font-weight:600;font-size:.88rem}
 .ofl button[aria-pressed="true"]{background:var(--vente);border-color:var(--vente);color:var(--surface)}
+.pdbar{display:flex;align-items:center;gap:10px;margin-block-start:12px}.pdbar .wk{flex:1;text-align:center;min-width:0}
+.pdsel{margin-block-start:12px}
+.ptab .lk{background:none;border:0;padding:0;font:inherit;color:var(--vente);text-decoration:underline;text-align:left;min-height:32px}
+.ptab tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.ptab td.u{font-family:inherit;color:var(--ink-2);font-size:.74rem}
 .ptab{width:100%;border-collapse:collapse;font-size:.82rem;margin-block-start:8px}
 .ptab th{text-align:right;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);font-weight:600;padding:4px 4px 6px}
 .ptab th:first-child,.ptab td:first-child{text-align:left}
@@ -431,8 +436,8 @@ button{cursor:pointer}
           <button class="ghost" id="prodAdd" type="button">Ajouter le produit</button>
           <div id="pmWrap" hidden style="display:flex;flex-direction:column;gap:8px;margin-block-start:6px">
             <h3 style="font-size:.95rem">Fiches de production</h3>
-            <p class="hint" style="margin:0">Coche « production » pour un produit fabriqué par une machiniste (DTF, sublimation…). Écris son unité (m, pièce) et son <b>coût de revient par unité</b> : il sert à calculer ton bénéfice. Le coût n’est jamais montré aux machinistes ni aux agents.</p>
-            <div class="pmhead"><span>Produit</span><span>Unité</span><span>Coût DH</span></div>
+            <p class="hint" style="margin:0">Coche « production » pour un produit fabriqué par une machiniste (DTF, sublimation…). Écris son unité (m, pièce) et son <b>coût de revient par unité</b> : il sert à calculer ton bénéfice. Le <b>prix de vente</b> est le prix proposé par défaut aux machinistes (ils peuvent le changer). Le coût n’est jamais montré aux machinistes ni aux agents.</p>
+            <div class="pmhead"><span>Produit</span><span>Unité</span><span>Coût DH</span><span>Prix vente</span></div>
             <div id="pmRows"></div>
             <p class="err" id="pmErr" role="alert" hidden></p>
             <button class="ghost" id="pmSave" type="button">Enregistrer les fiches</button>
@@ -640,6 +645,18 @@ button{cursor:pointer}
       <p class="hint" id="stRange" style="margin-block-start:8px"></p>
       <div id="stBox"><p class="empty">Chargement…</p></div>
     </section>
+    <section id="view-prods" role="tabpanel" aria-labelledby="tab-prods" hidden>
+      <div class="stp" id="pdPeriods" role="group" aria-label="Période">
+        <button type="button" data-p="j">Jour</button><button type="button" data-p="s">Semaine</button><button type="button" data-p="m">Mois</button>
+      </div>
+      <div class="pdbar">
+        <button class="nav" id="pdPrev" type="button" aria-label="Période précédente"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <div class="wk"><b id="pdLabel">—</b><small id="pdSub"></small></div>
+        <button class="nav" id="pdNext" type="button" aria-label="Période suivante"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <label class="field pdsel"><span>Produit</span><select id="pdProd"><option value="__all">Tous les produits</option></select></label>
+      <div id="pdBox"><p class="empty">Chargement…</p></div>
+    </section>
     <section id="view-mois" role="tabpanel" aria-labelledby="tab-mois" hidden>
       <div class="weekbar monthbar">
         <button class="nav" id="mPrev" type="button" aria-label="Mois précédent"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -717,6 +734,10 @@ button{cursor:pointer}
     <button class="tab" id="tab-stats" role="tab" aria-selected="false" type="button" data-view="stats">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       Stats
+    </button>
+    <button class="tab" id="tab-prods" role="tab" aria-selected="false" type="button" data-view="prods">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9h-9V3z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15V3.5z"/></svg>
+      Produits
     </button>
     <button class="tab" id="tab-stock" role="tab" aria-selected="false" type="button" data-view="stock">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8zM3 8l9 5 9-5M12 13v8"/></svg>
@@ -1610,17 +1631,18 @@ function renderProdMeta(){
   var ae=document.activeElement;if(ae&&$('pmRows').contains(ae))return;
   $('pmRows').innerHTML=list.map(function(n){
     var m=meta[n]||{unit:'',cost:0,prod:0};
-    return '<div class="pmrow" data-pn="'+esc(n)+'"><label class="pn"><input type="checkbox" data-f="prod"'+(m.prod?' checked':'')+' aria-label="Produit de production : '+esc(n)+'"><span>'+esc(n)+'</span></label><input data-f="unit" maxlength="8" placeholder="m" value="'+esc(m.unit||'')+'" aria-label="Unité de '+esc(n)+'"><input data-f="cost" inputmode="decimal" placeholder="0,00" value="'+(m.cost?(m.cost/100).toFixed(2).replace(/\.00$/,'').replace('.',','):'')+'" aria-label="Coût de revient de '+esc(n)+'"></div>';
+    return '<div class="pmrow" data-pn="'+esc(n)+'"><label class="pn"><input type="checkbox" data-f="prod"'+(m.prod?' checked':'')+' aria-label="Produit de production : '+esc(n)+'"><span>'+esc(n)+'</span></label><input data-f="unit" maxlength="8" placeholder="m" value="'+esc(m.unit||'')+'" aria-label="Unité de '+esc(n)+'"><input data-f="cost" inputmode="decimal" placeholder="0,00" value="'+(m.cost?(m.cost/100).toFixed(2).replace(/\.00$/,'').replace('.',','):'')+'" aria-label="Coût de revient de '+esc(n)+'"><input data-f="price" inputmode="decimal" placeholder="0,00" value="'+(m.price?(m.price/100).toFixed(2).replace(/\.00$/,'').replace('.',','):'')+'" aria-label="Prix de vente de '+esc(n)+'"></div>';
   }).join('');
 }
 function savePmeta(){
   var er=$('pmErr');er.hidden=true;
   var meta={},bad='';
   document.querySelectorAll('#pmRows .pmrow').forEach(function(r){
-    var n=r.dataset.pn,prod=r.querySelector('[data-f=prod]').checked,unit=r.querySelector('[data-f=unit]').value.trim(),cr=r.querySelector('[data-f=cost]').value.trim(),cost=cr===''?0:parseMoney(cr);
+    var n=r.dataset.pn,prod=r.querySelector('[data-f=prod]').checked,unit=r.querySelector('[data-f=unit]').value.trim(),cr=r.querySelector('[data-f=cost]').value.trim(),cost=cr===''?0:parseMoney(cr),pr=r.querySelector('[data-f=price]').value.trim(),price=pr===''?0:parseMoney(pr);
     if(cost==null){bad='Coût invalide pour '+n+'.';return}
+    if(price==null){bad='Prix de vente invalide pour '+n+'.';return}
     if(prod&&!unit){bad='Écris l’unité de '+n+' (m, pièce…).';return}
-    if(prod||unit||cost)meta[n]={unit:unit,cost:cost,prod:prod?1:0};
+    if(prod||unit||cost||price)meta[n]={unit:unit,cost:cost,price:price,prod:prod?1:0};
   });
   if(bad){er.textContent=bad;er.hidden=false;return}
   $('pmSave').disabled=true;
@@ -1648,14 +1670,104 @@ function renderOrdersView(){
   }).join('');
   box.innerHTML=h;
 }
-function ordRowHtml(o){
+function ordRowHtml(o,ro){
   var s=ordStatus(o),t=new Date(o.ts),armed=state.ordArm===o.id;
   var tag=s==='open'?'<span class="otag open">À encaisser</span>':(s==='paid'?'<span class="otag paid">Payée</span>':'<span class="otag">Annulée</span>');
-  var btn=s==='open'?'<div class="meta" style="margin-block-start:4px"><button type="button" class="mini'+(armed?' arm':'')+'" data-ocancel="'+esc(o.id)+'">'+(armed?'Confirmer l’annulation ?':'Annuler la commande')+'</button></div>':'';
+  var btn=s==='open'&&ro!==true?'<div class="meta" style="margin-block-start:4px"><button type="button" class="mini'+(armed?' arm':'')+'" data-ocancel="'+esc(o.id)+'">'+(armed?'Confirmer l’annulation ?':'Annuler la commande')+'</button></div>':'';
   var pf=s==='cancelled'?'':'<small class="'+(ordProfit(o)>=0?'pf':'')+'">bénéf. '+fmtS(ordProfit(o))+'</small>';
   return '<li class="orow'+(s==='cancelled'?' off':'')+'"><div><div class="lbl"><b>'+esc(o.clientName)+'</b> · '+esc(o.product)+'</div><div class="meta"><span>'+nfq(o.qty)+(o.unit?' '+esc(o.unit):'')+' × '+fmt(o.price)+' DH · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(o.by)+'</span>'+tag+'</div>'+btn+'</div><div class="amt">'+fmt(o.total)+pf+'</div></li>';
 }
 function nfq(q){return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:3}).format(q)}
+
+
+/* ---------- Analyse par produit ---------- */
+var pdSub=null,pdKey=null;
+function pdRange(){
+  var p=state.pdP||'s',a=state.pdA||todayStr(),s0,e0,lab,sub='';
+  if(p==='j'){s0=e0=a;lab=DAYS_LONG[dayIdx(a)]+' '+dShort(a);if(a===todayStr())sub="Aujourd'hui"}
+  else if(p==='m'){var k=monthKey(a);s0=k+'-01';e0=k+'-'+pad(daysInMonth(k));lab=monthName(k)}
+  else{s0=weekStart(a);e0=addDays(s0,6);lab=dShort(s0)+' – '+dShort(e0);sub=weekStart(todayStr())===s0?'Cette semaine':''}
+  return {p:p,s:s0,e:e0,label:lab,sub:sub};
+}
+function pdShift(dir){
+  var p=state.pdP||'s',a=state.pdA||todayStr();
+  if(p==='j')a=addDays(a,dir);
+  else if(p==='s')a=addDays(a,7*dir);
+  else{var k=monthKey(a),n=daysInMonth(k);a=dir>0?addDays(k+'-'+pad(n),1):addDays(k+'-01',-1)}
+  state.pdA=a;subscribeProds();
+}
+function subscribeProds(){
+  if(pdSub){pdSub();pdSub=null}
+  var r=pdRange(),key=r.s+'|'+r.e;pdKey=key;state.pdOps=null;renderProds();
+  if(!store)return;
+  pdSub=store.subscribeOps(r.s,r.e,function(rows){if(pdKey!==key)return;state.pdOps=rows;renderProds()},onStoreErr);
+}
+function pdQty(m){
+  var ks=Object.keys(m).filter(function(k){return m[k]});
+  return ks.length?ks.map(function(k){return nfq(m[k])+(k?' '+k:'')}).join(' + '):'0';
+}
+function pdAgg(list){
+  var t={q:{},ca:0,cost:0,n:0,paid:0,unpaid:0};
+  list.forEach(function(o){var u=o.unit||'';t.q[u]=(t.q[u]||0)+o.qty;t.ca+=o.total;t.cost+=ordUnitCost(o);t.n++;if(o.status==='paid')t.paid+=o.total;else t.unpaid+=o.total});
+  t.pf=t.ca-t.cost;return t;
+}
+function renderProds(){
+  var box=$('pdBox');if(!box)return;
+  var r=pdRange(),sel=state.pdProd||'__all';
+  document.querySelectorAll('#pdPeriods button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.p===r.p?'true':'false')});
+  $('pdLabel').textContent=r.label;$('pdSub').textContent=r.sub;
+    if(!store||store.mode!=='sheet'){box.innerHTML='<div class="empty"><strong>Connecte la Google Sheet.</strong>Les métrages viennent des commandes de production, qui passent par la Google Sheet.</div>';return}
+  if(state.orders==null||state.pdOps==null){box.innerHTML='<p class="empty">Chargement…</p>';return}
+  var inR=function(d){return d>=r.s&&d<=r.e};
+  var ords=state.orders.filter(function(o){return !o.cancelled&&inR(o.date)});
+  var direct=state.pdOps.filter(function(o){return !o.cancelled&&o.type==='vente'&&!o.order&&inR(o.date)});
+  // product list for the select
+  var names={};ords.forEach(function(o){names[o.product]=1});direct.forEach(function(o){if(o.product)names[o.product]=1});
+  var pm=store.prodMeta?store.prodMeta():{};Object.keys(pm).forEach(function(k){names[k]=1});state.orders.forEach(function(o){names[o.product]=1});
+  var nl=Object.keys(names).filter(Boolean).sort(function(a,b){return a.localeCompare(b,'fr')});
+  var ps=$('pdProd'),cur=nl.join('|')+'#'+sel;
+  if(ps.dataset.k!==cur){ps.dataset.k=cur;ps.innerHTML='<option value="__all">Tous les produits</option>'+nl.map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+'</option>'}).join('');if(sel!=='__all'&&nl.indexOf(sel)<0){sel='__all';state.pdProd=sel}ps.value=sel}
+  var fo=sel==='__all'?ords:ords.filter(function(o){return o.product===sel});
+  var fd=sel==='__all'?direct:direct.filter(function(o){return o.product===sel});
+  var t=pdAgg(fo),dca=0;fd.forEach(function(o){dca+=o.cents});
+  var mg=t.ca?Math.round(t.pf/t.ca*100):0;
+  var h='<div class="stk">'
+    +'<div><small>CA'+(sel==='__all'?'':' · '+esc(sel))+'</small><b>'+fmt(t.ca+dca)+'</b><i class="eq">'+t.n+' commande'+(t.n>1?'s':'')+(dca?' + ventes directes '+fmt(dca)+' DH':'')+'</i></div>'
+    +'<div><small>Bénéfice</small><b>'+fmtS(t.pf)+'</b><i class="eq">marge '+mg+' %</i></div>'
+    +'<div><small>Consommé</small><b>'+pdQty(t.q)+'</b><i class="eq">quantité commandée</i></div>'
+    +'<div><small>Prix moyen</small><b>'+(Object.keys(t.q).length===1&&t.q[Object.keys(t.q)[0]]?fmt(Math.round(t.ca/t.q[Object.keys(t.q)[0]])):'—')+'</b><i class="eq">'+(Object.keys(t.q).length===1&&Object.keys(t.q)[0]?'DH / '+esc(Object.keys(t.q)[0]):'DH / unité')+'</i></div>'
+    +'<div><small>Encaissé</small><b>'+fmt(t.paid)+'</b><i class="eq">commandes payées</i></div>'
+    +'<div><small>À encaisser</small><b>'+fmt(t.unpaid)+'</b><i class="eq">commandes en attente</i></div></div>';
+  // per product
+  if(sel==='__all'){
+    var by={};ords.forEach(function(o){(by[o.product]||(by[o.product]=[])).push(o)});
+    var dby={};direct.forEach(function(o){var k=o.product||'Sans produit';dby[k]=(dby[k]||0)+o.cents});
+    var rows=Object.keys(by).map(function(k){var a=pdAgg(by[k]);a.name=k;a.d=dby[k]||0;return a});
+    Object.keys(dby).forEach(function(k){if(!by[k])rows.push({name:k,q:{},ca:0,cost:0,n:0,pf:0,d:dby[k]})});
+    rows.sort(function(a,b){return (b.ca+b.d)-(a.ca+a.d)});
+    if(rows.length)h+='<div class="card"><h2>Par produit</h2><div class="xscroll"><table class="ptab"><thead><tr><th>Produit</th><th>Consommé</th><th>CA</th><th>Bénéf.</th><th>Marge</th></tr></thead><tbody>'+rows.map(function(b){
+      return '<tr><td><button type="button" class="lk" data-pd="'+esc(b.name)+'">'+esc(b.name)+'</button></td><td>'+pdQty(b.q)+'</td><td>'+fmt(b.ca+b.d)+'</td><td class="'+(b.pf>=0?'g':'bad')+'">'+(b.n?fmtS(b.pf):'—')+'</td><td>'+(b.ca?Math.round(b.pf/b.ca*100)+' %':'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div><p class="hint" style="margin-block-start:8px">Touche un produit pour le voir seul. Bénéfice = montant − quantité × coût de revient (commandes de production).'+(dca?' Les ventes directes (sans commande) comptent dans le CA mais pas dans le bénéfice ni le métrage.':'')+'</p></div>';
+  }
+  // breakdown
+  var groups=[],gl='';
+  if(r.p==='s'){gl='Jour par jour';for(var i=0;i<7;i++){var d=addDays(r.s,i);groups.push({name:DAYS_LONG[i]+' '+dShort(d),s:d,e:d})}}
+  else if(r.p==='m'){gl='Semaine par semaine';var w=weekStart(r.s);while(w<=r.e){var ws=w<r.s?r.s:w,we=addDays(w,6)>r.e?r.e:addDays(w,6);groups.push({name:dShort(ws)+' – '+dShort(we),s:ws,e:we});w=addDays(w,7)}}
+  if(groups.length){
+    var dd={};fd.forEach(function(o){dd[o.date]=(dd[o.date]||0)+o.cents});
+    var grows=groups.map(function(g){var l=fo.filter(function(o){return o.date>=g.s&&o.date<=g.e}),a=pdAgg(l),x=0;Object.keys(dd).forEach(function(k){if(k>=g.s&&k<=g.e)x+=dd[k]});a.name=g.name;a.d=x;return a});
+    var mx=0;grows.forEach(function(a){if(a.ca+a.d>mx)mx=a.ca+a.d});
+    h+='<div class="card"><h2>'+gl+'</h2><div class="xscroll"><table class="ptab"><thead><tr><th>Période</th><th>Consommé</th><th>CA</th><th>Bénéf.</th></tr></thead><tbody>'+grows.map(function(a){
+      return '<tr><td>'+esc(a.name)+'</td><td>'+(a.n?pdQty(a.q):'—')+'</td><td>'+((a.ca+a.d)?fmt(a.ca+a.d):'—')+'</td><td class="'+(a.pf>=0?'g':'bad')+'">'+(a.n?fmtS(a.pf):'—')+'</td></tr>';
+    }).join('')+'<tr class="tot"><td>Total</td><td>'+pdQty(t.q)+'</td><td>'+fmt(t.ca+dca)+'</td><td class="'+(t.pf>=0?'g':'bad')+'">'+fmtS(t.pf)+'</td></tr></tbody></table></div></div>';
+  }
+  // detail of orders (day, or any period)
+  if(fo.length&&(r.p==='j'||fo.length<=40)){
+    h+='<div class="card"><h2>Commandes'+(r.p==='j'?' du jour':'')+'</h2><ul class="ops">'+fo.slice().sort(function(a,b){return (b.ts||0)-(a.ts||0)}).map(function(o){return ordRowHtml(o,true)}).join('')+'</ul></div>';
+  }
+  if(!fo.length&&!fd.length)h+='<p class="empty" style="margin-block-start:14px">Aucune vente sur cette période'+(sel==='__all'?'':' pour ce produit')+'.</p>';
+  box.innerHTML=h;
+}
 
 /* ---------- Statistiques ---------- */
 var stSub=null,stSubP=null,stKey=null;
@@ -1800,7 +1912,7 @@ function renderStats(){
   if(t.cancelled)h+='<p class="hint" style="margin-block-start:12px">'+t.cancelled+' bon'+(t.cancelled>1?'s':'')+' annulé'+(t.cancelled>1?'s':'')+' non compté'+(t.cancelled>1?'s':'')+'.</p>';
   box.innerHTML=h;
 }
-function renderAll(){renderHeader();renderBons();renderCloture();renderMois();renderProductSelect();renderProdManager();renderProdMeta();if(state.view==='orders')renderOrdersView();if(state.view==='stats')renderStats()}
+function renderAll(){renderHeader();renderBons();renderCloture();renderMois();renderProductSelect();renderProdManager();renderProdMeta();if(state.view==='orders')renderOrdersView();if(state.view==='stats')renderStats();if(state.view==='prods')renderProds()}
 function syncInputs(force){
   updFondBox();
   if(state.dirty&&!force)return;
@@ -1857,16 +1969,17 @@ function skRun(p,okMsg){
 }
 function setView(v){
   state.view=v;
-  ['bons','orders','cloture','mois','clients','stats','stock','reglages'].forEach(function(n){
+  ['bons','orders','cloture','mois','clients','stats','prods','stock','reglages'].forEach(function(n){
     $('view-'+n).hidden=n!==v;
     $('tab-'+n).setAttribute('aria-selected',n===v?'true':'false');
   });
-  $('weekbar').hidden=v==='mois'||v==='clients'||v==='stats'||v==='orders'||v==='stock'||v==='reglages';
+  $('weekbar').hidden=v==='mois'||v==='clients'||v==='stats'||v==='prods'||v==='orders'||v==='stock'||v==='reglages';
   if(v==='stock')renderStock();
   if(v==='orders'){renderOrdersView();if(store&&store.mode==='sheet'&&!state.ordRange){state.ordRange=1;store.subscribeOps(addDays(todayStr(),-60),todayStr(),function(){},onStoreErr)}}
+  if(v==='prods'){if(store&&pdKey!==pdRange().s+'|'+pdRange().e)subscribeProds();else renderProds()}
   if(v==='stats'&&store&&stKey!==(state.stPeriod||'30'))subscribeStats();
   if(v==='mois'&&store&&mSubKey!==state.month)subscribeMonth();
-  var nm={bons:'Bons',orders:'Commandes',cloture:'Clôture',mois:'Mois',clients:'Clients',stats:'Stats',stock:'Stock',reglages:'Réglages'};
+  var nm={bons:'Bons',orders:'Commandes',cloture:'Clôture',mois:'Mois',clients:'Clients',stats:'Stats',prods:'Produits',stock:'Stock',reglages:'Réglages'};
   $('viewName').textContent=nm[v]||'';
   closeMenu();
   window.scrollTo(0,0);
@@ -2447,6 +2560,11 @@ function init(){
     var mn=parseQ($('skDMin').value);skRun(store.stockCall('saveStockItem',{id:skCur,name:$('skDName').value,unit:$('skDUnit').value,min:mn==null?2:mn,archived:true}),'Consommable archivé');
   });$('scrim').addEventListener('click',closeMenu);
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
+  document.querySelectorAll('#pdPeriods button').forEach(function(b){b.addEventListener('click',function(){state.pdP=b.dataset.p;subscribeProds()})});
+  $('pdPrev').addEventListener('click',function(){pdShift(-1)});
+  $('pdNext').addEventListener('click',function(){pdShift(1)});
+  $('pdProd').addEventListener('change',function(){state.pdProd=this.value;renderProds()});
+  $('pdBox').addEventListener('click',function(e){var b=e.target.closest('[data-pd]');if(b){state.pdProd=b.dataset.pd;$('pdProd').dataset.k='';renderProds();window.scrollTo(0,0)}});
   document.querySelectorAll('.tab[data-view]').forEach(function(t){t.addEventListener('click',function(){setView(t.dataset.view)})});
   $('popOk').addEventListener('click',function(){$('pop').hidden=true;$('amount').focus()});
   $('date').addEventListener('input',function(){this.dataset.touched='1'});
@@ -2860,7 +2978,7 @@ async function boot(){
   state.ready=true;
   renderSync();applyPerm();
   state.orders=null;
-  store.subscribeOrders(function(rows){state.orders=rows;updOrdBadge();renderProdMeta();if(state.view==='orders')renderOrdersView();if(state.view==='stats')renderStats()},onStoreErr);
+  store.subscribeOrders(function(rows){state.orders=rows;updOrdBadge();renderProdMeta();if(state.view==='orders')renderOrdersView();if(state.view==='stats')renderStats();if(state.view==='prods')renderProds()},onStoreErr);
   state.stock=undefined;
   store.subscribeStock(function(st){state.stock=st;renderStkBanner();if(state.view==='stock')renderStock()},onStoreErr);
   store.subscribeClotures(function(rows){
