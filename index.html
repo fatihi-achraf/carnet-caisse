@@ -1444,7 +1444,7 @@ function renderClients(){
   var book=creditBook(),all={};
   clientsSorted().forEach(function(c){all[c.id]={id:c.id,name:c.name,due:0,ops:[]}});
   Object.keys(book).forEach(function(k){all[k]=book[k]});
-  var qk=nameKey(state.cliQ||''),list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){return b.name&&(!qk||nameKey(b.name).indexOf(qk)>=0)}).sort(function(a,b){return b.due-a.due||(a.name<b.name?-1:1)});
+  var qk=nameKey(state.cliQ||''),list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){return b.name&&b.due!==0&&(!qk||nameKey(b.name).indexOf(qk)>=0)}).sort(function(a,b){return b.due-a.due||(a.name<b.name?-1:1)});
   var sel=state.cliSel&&all[state.cliSel]?all[state.cliSel]:null;
   $('cliListCard').hidden=!!sel;$('cliDet').hidden=!sel;
   if(sel){
@@ -1537,14 +1537,14 @@ function renderClientPicker(){
   }
   sb.hidden=true;fd.hidden=false;
   var q=$('clientQ').value,qk=nameKey(q),all=clientsSorted(),res=$('clientRes'),html='';
-  var matches=all.filter(function(c){return !qk||nameKey(c.name).indexOf(qk)>=0}).slice(0,6);
+  var matches=all.filter(function(c){var d=(book[c.id]&&book[c.id].due)||0;return d!==0&&(!qk||nameKey(c.name).indexOf(qk)>=0)}).slice(0,6);
   matches.forEach(function(c){
     var d=(book[c.id]&&book[c.id].due)||0;
     html+='<button type="button" data-cid="'+esc(c.id)+'"><span>'+esc(c.name)+'</span><small>'+(d>0?'doit '+fmt(d):(d<0?'avance '+fmt(d):''))+'</small></button>';
   });
-  var exact=qk&&all.some(function(c){return nameKey(c.name)===qk});
+  var exact=qk&&matches.some(function(c){return nameKey(c.name)===qk});
   if(qk&&!exact)html+='<button type="button" class="new" data-new="1">＋ Créer le client « '+esc(cleanName(q))+' »</button>';
-  if(!qk&&!matches.length)html+='<p class="muted">Aucun client pour l’instant. Écris un nom pour créer le premier.</p>';
+  if(!qk&&!matches.length)html+='<p class="muted">Aucun client avec un solde en cours. Écris un nom pour en créer un.</p>';
   res.innerHTML=html;advHint();
 }
 function advHint(){
@@ -2645,8 +2645,8 @@ function init(){
     if(e.target.closest('[data-act="clientChange"]')){state.formClient=null;renderClientPicker();$('clientQ').focus()}
   });
   $('shareClients').addEventListener('click',function(){
-    var list=clientsSorted().slice(0,400),book=creditBook();
-    if(!list.length){toast('Aucun client pour l’instant.');return}
+    var book=creditBook(),list=clientsSorted().filter(function(c){return ((book[c.id]&&book[c.id].due)||0)!==0}).slice(0,400);
+    if(!list.length){toast('Aucun client avec un solde en cours.');return}
     var lines=['Carnet de Caisse · liste des clients ('+dFull(todayStr())+')'];
     list.forEach(function(c){var d=(book[c.id]&&book[c.id].due)||0;lines.push('- '+c.name+(d>0?' : doit '+fmt(d)+' DH':(d<0?' : avance '+fmt(d)+' DH':'')))});
     lines.push('','Colle ce message dans Carnet Agent (Clients > Mettre à jour la liste).');
