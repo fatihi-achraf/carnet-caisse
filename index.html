@@ -325,6 +325,7 @@ button{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){.toast{transition:none}}
+#cashCli{min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%;font:inherit}#cashRes[hidden]{display:none}#cashRes{max-height:220px;overflow-y:auto}
 </style>
 </head>
 <body>
@@ -381,6 +382,11 @@ button{cursor:pointer}
           <label for="product">Produit (facultatif)</label>
           <select id="product"><option value="">— Sans produit —</option></select>
           <button type="button" class="linkbtn" id="prodManage">Ajouter ou modifier les produits</button>
+        </div>
+        <div class="field cpick" id="cashBox" hidden>
+          <span>Client (obligatoire)</span>
+          <input id="cashCli" autocomplete="off" maxlength="60" placeholder="Choisis un client ou écris son nom" aria-label="Client">
+          <div class="cres" id="cashRes" hidden></div>
         </div>
         <div class="field cpick" id="clientBox" hidden>
           <span id="clientCap">Client</span>
@@ -841,7 +847,7 @@ function isCreditOp(o){return o.type==='reglement'||(o.type==='vente'&&o.mode===
 function applyEdit(o,p){
   o.mode=p.mode;o.cents=p.cents;o.label=p.label;
   if(p.product)o.product=p.product;else delete o.product;
-  if(p.cr){o.client=p.client;o.clientName=p.clientName;o.cr=1}else{delete o.client;delete o.clientName;delete o.cr}
+  if(p.cr){o.client=p.client;o.clientName=p.clientName;o.cr=1}else{delete o.client;delete o.cr;if(p.clientName)o.clientName=p.clientName;else delete o.clientName}
   o.editedAt=Date.now();
 }
 function makeLocalStore(){
@@ -1515,6 +1521,7 @@ function prodHtml(ops,sel,idBase){
   }
   return html;
 }
+function needsCash(){return document.querySelector('input[name=type]:checked').value==='vente'&&document.querySelector('input[name=mode]:checked').value!=='credit'}
 function needsClient(){
   var type=document.querySelector('input[name=type]:checked').value,mode=document.querySelector('input[name=mode]:checked').value;
   return type==='reglement'||(type==='vente'&&mode==='credit');
@@ -2007,9 +2014,9 @@ function refreshForm(){
   $('saveBtn').textContent=type==='vente'?(mode==='credit'?'Enregistrer la vente à crédit':'Enregistrer la vente'):(type==='reglement'?'Enregistrer le règlement':'Enregistrer la charge');
   $('chips').hidden=type!=='charge';
   renderProductSelect();
-  var need=type==='charge'||(type==='vente'&&mode!=='especes'&&mode!=='credit');
-  $('labelCap').textContent=type==='charge'?'Détail de la charge (obligatoire)':(type==='reglement'?'Note (facultatif)':(need?'Client ou référence (obligatoire)':'Détail (facultatif)'));
-  $('label').placeholder=type==='charge'?'Ex : fournisseur, facture électricité':(type==='reglement'?'Ex : reste à payer le mois prochain':(need?'Ex : Mme Alaoui, virement du 11/10':'Ex : 2 pains, 1 lait'));
+  $('labelCap').textContent=type==='charge'?'Détail de la charge (obligatoire)':'Note (facultatif)';
+  $('label').placeholder=type==='charge'?'Ex : fournisseur, facture électricité':(type==='reglement'?'Ex : reste à payer le mois prochain':'Ex : nom du logo, 2 pièces…');
+  var cb=!needsCash();$('cashBox').hidden=cb;if(cb){$('cashCli').value='';$('cashRes').hidden=true}
   renderClientPicker();
 }
 function subscribeWeek(){
@@ -2653,6 +2660,15 @@ function init(){
     lines.push('CLIENTS1:'+b64e(JSON.stringify({v:1,t:Date.now(),c:list.map(function(c){return [c.name,(book[c.id]&&book[c.id].due)||0]})})));
     copyText(lines.join('\n'),'clientsBox');
   });
+  function showCash(){
+    var q=nameKey($('cashCli').value),box=$('cashRes');
+    var m=clientsSorted().filter(function(c){return !q||nameKey(c.name).indexOf(q)>=0}).slice(0,8);
+    box.innerHTML=m.map(function(c){return '<button type="button" data-cn="'+esc(c.name)+'"><span>'+esc(c.name)+'</span></button>'}).join('');
+    box.hidden=!m.length;
+  }
+  $('cashCli').addEventListener('focus',showCash);$('cashCli').addEventListener('input',showCash);
+  $('cashRes').addEventListener('click',function(e){var b=e.target.closest('button');if(b){$('cashCli').value=b.dataset.cn;$('cashRes').hidden=true}});
+  document.addEventListener('click',function(e){if(!e.target.closest('#cashBox'))$('cashRes').hidden=true});
   $('filters').addEventListener('click',function(e){
     var b=e.target.closest('[data-f]');
     if(!b)return;
@@ -2673,7 +2689,8 @@ function init(){
     if(cents==null||cents<=0){err('Écris un montant, par exemple 120 ou 45,50.',$('amount'));return}
     if(cents>1000000000){err('Ce montant est trop grand. Vérifie les chiffres.',$('amount'));return}
     if(type==='charge'&&!label){err('Précise la charge : fournisseur, électricité, transport…',$('label'));return}
-    if(type==='vente'&&mode!=='especes'&&mode!=='credit'&&!label){err('Écris le nom du client ou la référence, pour retrouver ce paiement plus tard.',$('label'));return}
+    var cash='';
+    if(needsCash()){cash=cleanName($('cashCli').value);if(cash.length<2){err('Écris le nom du client (obligatoire).',$('cashCli'));return}}
     var cl=null,advN=0;
     if(needsClient()){
       cl=state.formClient&&state.clients[state.formClient];
@@ -2686,13 +2703,13 @@ function init(){
     }
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>workDate()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
     var op={type:type,mode:mode,cents:cents,label:label,date:date,ts:Date.now(),cancelled:false};
-    if(cl){op.client=state.formClient;op.clientName=cl.name;op.cr=1}
+    if(cl){op.client=state.formClient;op.clientName=cl.name;op.cr=1}else if(cash)op.clientName=cash;
     if(type==='vente'&&!$('productBox').hidden&&$('product').value)op.product=$('product').value;
     if(state.me)op.by=state.me;else if(store.mode==='sheet')op.agent=state.myName;
     busy=true;applyPerm();
     store.addOp(op).then(function(){
-      $('amount').value='';$('label').value='';state.formClient=null;$('clientQ').value='';renderClientPicker();
-      showPop((type==='vente'?'Vente enregistrée':(type==='reglement'?'Règlement enregistré':'Charge enregistrée'))+' ✓',fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:'')+(advN>0?' · dont '+fmt(advN)+' DH d’avance':''));
+      $('amount').value='';$('label').value='';state.formClient=null;$('clientQ').value='';$('cashCli').value='';$('cashRes').hidden=true;renderClientPicker();
+      showPop((type==='vente'?'Vente enregistrée':(type==='reglement'?'Règlement enregistré':'Charge enregistrée'))+' ✓',fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:(cash?' · '+cash:''))+(advN>0?' · dont '+fmt(advN)+' DH d’avance':''));
       var w=weekStart(date);
       if(w!==state.week)setWeek(w);
       $('amount').focus();
@@ -2702,9 +2719,9 @@ function init(){
   var edId=null,edOp=null;
   function edNeedClient(){var t=edOp.type,m=$('edMode').value;return t==='reglement'||(t==='vente'&&m==='credit')}
   function edRefresh(){
-    var t=edOp.type,m=$('edMode').value,needLbl=t==='charge'||(t==='vente'&&m!=='especes'&&m!=='credit');
+    var t=edOp.type,m=$('edMode').value,needLbl=t==='charge';
     $('edClientBox').hidden=!edNeedClient();$('edProdBox').hidden=t!=='vente';
-    $('edLabelCap').textContent=t==='charge'?'Détail de la charge (obligatoire)':(needLbl?'Client ou référence (obligatoire)':'Détail (facultatif)');
+    $('edLabelCap').textContent=t==='charge'?'Détail de la charge (obligatoire)':'Note (facultatif)';
   }
   function openEdit(id){
     var o=(state.ops||[]).find(function(x){return x.id===id});
@@ -2736,8 +2753,7 @@ function init(){
     var cents=parseMoney($('edAmount').value),mode=$('edMode').value,t=edOp.type,label=$('edLabel').value.trim();
     if(cents==null||cents<=0){err('Écris un montant supérieur à zéro.');return}
     if(cents>1000000000){err('Montant trop grand.');return}
-    var needLbl=t==='charge'||(t==='vente'&&mode!=='especes'&&mode!=='credit');
-    if(needLbl&&!label){err(t==='charge'?'Écris le détail de la charge.':'Écris le client ou une référence pour ce mode de paiement.');return}
+    if(t==='charge'&&!label){err('Écris le détail de la charge.');return}
     var needCl=edNeedClient(),cid=needCl?$('edClient').value:'',cname='';
     if(needCl){
       var c=state.clients[cid];cname=c?c.name:(edOp.clientName||'');
@@ -2745,6 +2761,7 @@ function init(){
       if(t==='reglement'){
       }
     }
+    if(!cname&&edOp.clientName)cname=edOp.clientName;
     var patch={mode:mode,cents:cents,label:label.slice(0,120),product:t==='vente'?$('edProduct').value:'',client:cid,clientName:cname,cr:needCl?1:0};
     $('edSave').disabled=true;
     store.editOp(edId,patch).then(function(){closeEdit();showPop('Bon modifié ✓',fmt(cents)+' DH · '+MODES[mode]+(cname?' · '+cname:''))}).catch(function(x){err(failMsg(x))}).then(function(){$('edSave').disabled=false});
