@@ -641,8 +641,10 @@ button{cursor:pointer}
         <h2>Clients</h2>
         <div class="stp" id="cliModes" role="group" aria-label="Affichage"><button type="button" data-cm="cr">Crédits en cours</button><button type="button" data-cm="all">Tous les clients</button></div>
         <label class="field"><span>Chercher un client</span><input id="cliQ" autocomplete="off" placeholder="Écris un nom"></label>
+        <div id="cliFilt" hidden></div>
+        <div id="cliSum"></div>
         <div id="cliTools" hidden style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-block-end:10px">
-          <select id="cliSort" aria-label="Tri" style="min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"><option value="az">Ordre alphabétique</option><option value="ca">Meilleurs clients (CA)</option></select>
+          <select id="cliSort" aria-label="Tri" style="min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"><option value="az">Ordre alphabétique</option><option value="ca">Meilleurs clients (CA)</option><option value="pf">Plus rentables (bénéfice)</option><option value="up">Plus forte hausse</option><option value="dn">Plus forte baisse</option><option value="due">Plus gros solde dû</option><option value="n">Plus de commandes</option></select>
           <button type="button" class="mini" id="cliNewBtn">+ Nouveau client</button>
         </div>
         <div id="cliNew" hidden class="field" style="gap:8px;margin-block-end:12px">
@@ -1500,6 +1502,190 @@ function renderCredits(){
 }
 function clientOps(b){return b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)||(y.date<x.date?-1:1)})}
 function cliStats(c){var ca=0,pf=0,n=0,k=nameKey(c.name);(state.orders||[]).forEach(function(o){if(o.cancelled)return;if((o.client&&o.client===c.id)||nameKey(o.clientName)===k){ca+=o.total;pf+=ordProfit(o);n++}});return {ca:ca,pf:pf,n:n}}
+
+/* ---- relevé client : WhatsApp (texte) ou image à partager ---- */
+function waPhone(ph){var d=String(ph||'').replace(/[^\d+]/g,'');if(d.indexOf('+')===0)d=d.slice(1);d=d.replace(/\D/g,'');if(d.indexOf('00')===0)d=d.slice(2);else if(d.length===10&&d.charAt(0)==='0')d='212'+d.slice(1);else if(d.length===9&&/^[5-7]/.test(d))d='212'+d;return d.length>=9?d:''}
+function cliStatement(sel){
+  var pris=0,paye=0;sel.ops.forEach(function(o){if(o.type==='reglement')paye+=o.cents;else pris+=o.cents});
+  var rest=pris-paye,rows=clientOps(sel).slice(0,25).map(function(o){var r=o.type==='reglement';return {d:dShort(o.date),t:(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+o.product:'')+(o.label&&!r?' · '+o.label:''),a:(r?'−':'+')+fmt(o.cents)}});
+  return {name:sel.name,pris:pris,paye:paye,rest:rest,rows:rows,date:dShort(todayStr())};
+}
+function cliStatementText(st){
+  var l=['Bonjour '+st.name+',','Voici votre relevé de compte au '+st.date+' :','','Crédits : '+fmt(st.pris)+' DH','Règlements : '+fmt(st.paye)+' DH',(st.rest<0?'Avance : ':'Reste à payer : ')+fmt(st.rest)+' DH'];
+  if(st.rows.length){l.push('','Derniers mouvements :');st.rows.slice(0,12).forEach(function(r){l.push(r.d+' · '+r.t+' · '+r.a+' DH')})}
+  l.push('','Merci !');return l.join('\n');
+}
+function cliStatementBlob(st,cb){
+  var W=720,pad=36,lh=40,H=pad*2+150+Math.max(1,st.rows.length)*lh+90,sc=2,cv=document.createElement('canvas');
+  cv.width=W*sc;cv.height=H*sc;var c=cv.getContext('2d');c.scale(sc,sc);
+  c.fillStyle='#fff';c.fillRect(0,0,W,H);c.fillStyle='#1b7a4c';c.fillRect(0,0,W,86);
+  c.fillStyle='#fff';c.font='700 28px system-ui,sans-serif';c.fillText('Relevé de compte',pad,40);c.font='500 18px system-ui,sans-serif';c.fillText(st.name+' · '+st.date,pad,68);
+  var y=86+pad+10;c.fillStyle='#111';c.font='500 20px system-ui,sans-serif';
+  [['Crédits',fmt(st.pris)+' DH'],['Règlements',fmt(st.paye)+' DH']].forEach(function(p){c.textAlign='left';c.fillText(p[0],pad,y);c.textAlign='right';c.fillText(p[1],W-pad,y);y+=34});
+  c.font='700 24px system-ui,sans-serif';c.fillStyle=st.rest>0?'#b93a22':'#1b7a4c';c.textAlign='left';c.fillText(st.rest<0?'Avance':'Reste à payer',pad,y+6);c.textAlign='right';c.fillText(fmt(st.rest)+' DH',W-pad,y+6);y+=34;
+  c.strokeStyle='#d3daea';c.beginPath();c.moveTo(pad,y);c.lineTo(W-pad,y);c.stroke();y+=30;
+  c.font='500 18px system-ui,sans-serif';c.fillStyle='#111';
+  st.rows.forEach(function(r){c.textAlign='left';var t=r.t;while(c.measureText(r.d+'  '+t).width>W-pad*2-120&&t.length>4)t=t.slice(0,-2);c.fillText(r.d+'  '+t,pad,y);c.textAlign='right';c.fillStyle=r.a.charAt(0)==='−'?'#1b7a4c':'#111';c.fillText(r.a,W-pad,y);c.fillStyle='#111';y+=lh});
+  if(!st.rows.length){c.textAlign='left';c.fillText('Aucun mouvement.',pad,y)}
+  cv.toBlob(cb,'image/png');
+}
+function cliWaText(id){
+  var sel=cliFor(id);if(!sel)return;var st=cliStatement(sel),p=waPhone(sel.phone);
+  if(!p)toast('Pas de numéro valide : choisis le contact dans WhatsApp.');
+  var a=document.createElement('a');a.href=(p?'https://wa.me/'+p+'?text=':'whatsapp://send?text=')+encodeURIComponent(cliStatementText(st));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+function cliWaImage(id){
+  var sel=cliFor(id);if(!sel)return;var st=cliStatement(sel),p=waPhone(sel.phone);
+  cliStatementBlob(st,function(blob){
+    if(!blob){toast('Image impossible.');return}
+    var f=new File([blob],'releve-'+nameKey(st.name).replace(/\s+/g,'-')+'.png',{type:'image/png'});
+    var done=false;
+    if(navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
+      done=true;navigator.share({files:[f],text:cliStatementText(st).split('\n').slice(0,6).join('\n')}).catch(function(e){if(e&&e.name!=='AbortError')cliWaPanel(st,blob,f.name,p)});
+    }
+    if(!done)cliWaPanel(st,blob,f.name,p);
+  });
+}
+
+function cliWaPanel(st,blob,fname,p){
+  var old=document.getElementById('waPanel');if(old)old.remove();
+  var url=URL.createObjectURL(blob),wa='https://api.whatsapp.com/send?'+(p?'phone='+p+'&':'')+'text='+encodeURIComponent('Bonjour '+st.name+', voici votre relevé de compte.');
+  var d=document.createElement('div');d.id='waPanel';d.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:12px';
+  d.innerHTML='<div style="background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px"><b>Relevé de '+esc(st.name)+'</b><img src="'+url+'" alt="Relevé" style="width:100%;border:1px solid var(--line,#ccc);border-radius:8px"><p class="muted" style="margin:0">Appuie longuement sur l’image pour l’enregistrer ou la copier, puis ouvre WhatsApp et colle-la.</p><a class="primary" id="waDl" href="'+url+'" download="'+esc(fname)+'" style="text-align:center;text-decoration:none;padding:14px;border-radius:12px;background:#1d3fa3;color:#fff;font-weight:700">Enregistrer l’image</a><a id="waGo" href="'+wa+'" target="_top" rel="noopener" style="text-align:center;text-decoration:none;padding:14px;border-radius:12px;background:#1b7a4c;color:#fff;font-weight:700">Ouvrir WhatsApp'+(p?'':' (choisir le contact)')+'</a><button type="button" class="ghost" id="waX">Fermer</button></div>';
+  document.body.appendChild(d);
+  d.addEventListener('click',function(e){if(e.target===d||e.target.id==='waX')d.remove()});
+}
+function cliFor(id){
+  var book=creditBook(),o=null;
+  if(book[id])o=Object.assign({},book[id],{phone:(state.clients[id]&&state.clients[id].phone)||''});
+  else if(state.clients[id])o={id:id,name:state.clients[id].name,phone:state.clients[id].phone||'',due:0,ops:[]};
+  return o;
+}
+
+/* ---------- analyse détaillée : clients et produits (commandes de production) ---------- */
+var CLI_PERIODS=[['all','Tout'],['w','Cette semaine'],['pw','Sem. dernière'],['m','Ce mois'],['pm','Mois dernier'],['y','Cette année'],['c','Dates']];
+function ensureWide(){
+  if(state.wideSub||!store||store.mode!=='sheet')return;
+  state.wideSub=1;var t=todayStr();
+  store.subscribeOps(addDays(t,-400),t,function(rows){state.wOps=rows;if(state.view==='stats')renderStats();if(state.view==='clients')renderClients()},onStoreErr);
+}
+function anRange(p){
+  var t=todayStr(),s,e,ps,pe,n,lab;
+  if(p==='all')return {p:p,s:'0000-00-00',e:'9999-99-99',ps:null,pe:null,label:'Depuis le début'};
+  if(p==='c'){s=state.cliFrom||addDays(t,-29);e=state.cliTo||t;if(e<s){var x=s;s=e;e=x};lab='Du '+dShort(s)+' au '+dShort(e)}
+  else if(p==='w'){s=weekStart(t);e=addDays(s,6);lab='Cette semaine'}
+  else if(p==='pw'){s=addDays(weekStart(t),-7);e=addDays(s,6);lab='Semaine dernière'}
+  else if(p==='m'){s=monthKey(t)+'-01';e=monthKey(t)+'-'+pad(daysInMonth(monthKey(t)));lab='Ce mois'}
+  else if(p==='pm'){var pk=monthKey(addDays(monthKey(t)+'-01',-1));s=pk+'-01';e=pk+'-'+pad(daysInMonth(pk));lab='Mois dernier'}
+  else{s=t.slice(0,4)+'-01-01';e=t.slice(0,4)+'-12-31';lab='Cette année'}
+  if(p==='w'){ps=addDays(s,-7);pe=addDays(ps,6)}
+  else if(p==='pw'){ps=addDays(s,-7);pe=addDays(ps,6)}
+  else if(p==='m'||p==='pm'){var q=monthKey(addDays(s,-1));ps=q+'-01';pe=q+'-'+pad(daysInMonth(q))}
+  else if(p==='y'){var yy=String(Number(s.slice(0,4))-1);ps=yy+'-01-01';pe=yy+'-12-31'}
+  else{n=Math.round((parseYmd(e)-parseYmd(s))/86400000)+1;pe=addDays(s,-1);ps=addDays(pe,-(n-1))}
+  return {p:p,s:s,e:e,ps:ps,pe:pe,label:lab,sub:'comparé au '+dShort(ps)+' – '+dShort(pe)};
+}
+function pctChip(cur,prev,invert){
+  if(prev==null)return '';
+  if(prev===0&&cur===0)return '<i class="eq">= stable</i>';
+  if(prev===0)return '<i class="up">nouveau</i>';
+  var pc=Math.round((cur-prev)/Math.abs(prev)*100);
+  if(pc===0)return '<i class="eq">= stable</i>';
+  return '<i class="'+((invert?pc<0:pc>0)?'up':'dn')+'">'+(pc>0?'▲ +':'▼ −')+Math.abs(pc)+' %</i>';
+}
+function anClientKey(o,ids){
+  if(o.client&&ids.byId[o.client])return o.client;
+  var k=nameKey(o.clientName||'');return k&&ids.byName[k]?ids.byName[k]:(o.client||('n:'+k));
+}
+function anIds(all){var by={},bn={};Object.keys(all).forEach(function(k){by[k]=1;bn[nameKey(all[k].name)]=k});return {byId:by,byName:bn}}
+function anAgg(r,prod,ids){
+  var res={};
+  (state.orders||[]).forEach(function(o){
+    if(o.cancelled||o.date<r.s||o.date>r.e)return;
+    if(prod&&prod!=='__all'&&o.product!==prod)return;
+    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,pf:0,n:0,prods:{}});
+    a.ca+=o.total||0;a.pf+=ordProfit(o);a.n++;
+    var p=a.prods[o.product]||(a.prods[o.product]={q:0,u:o.unit||'',ca:0,pf:0,n:0});p.q+=o.qty||0;p.ca+=o.total||0;p.pf+=ordProfit(o);p.n++;
+  });
+  return res;
+}
+function anProdList(){var m={};(state.orders||[]).forEach(function(o){if(o.product)m[o.product]=1});return Object.keys(m).sort(function(a,b){return a.localeCompare(b,'fr')})}
+function cliFiltHtml(){
+  var p=state.cliP||'all',h='<div class="stp" id="cliPer" role="group" aria-label="Période" style="padding-block:4px 6px">'+CLI_PERIODS.map(function(x){return '<button type="button" data-cp="'+x[0]+'" aria-pressed="'+(x[0]===p?'true':'false')+'">'+x[1]+'</button>'}).join('')+'</div>';
+  if(p==='c'){var r=anRange('c');h+='<div style="display:flex;gap:8px;margin-block-end:8px"><input type="date" id="cliFrom" value="'+r.s+'" aria-label="Du" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"><input type="date" id="cliTo" value="'+r.e+'" aria-label="Au" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"></div>'}
+  return h;
+}
+function cliProdSelHtml(){
+  var cur=state.cliProd||'__all';
+  return '<select id="cliProd" aria-label="Produit" style="min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);max-width:100%"><option value="__all">Tous les produits</option>'+anProdList().map(function(k){return '<option value="'+esc(k)+'"'+(k===cur?' selected':'')+'>'+esc(k)+'</option>'}).join('')+'</select>';
+}
+function cliAnalysisCard(sel,all){
+  var ids=anIds(all),r=anRange(state.cliP||'all'),cur=anAgg(r,'__all',ids)[sel.id]||{ca:0,pf:0,n:0,prods:{}},prv=r.ps?(anAgg({s:r.ps,e:r.pe},'__all',ids)[sel.id]||{ca:0,pf:0,n:0,prods:{}}):null;
+  var h='<div class="card" style="margin-block:12px;padding:12px"><h2 style="margin-block-end:4px">Analyse · '+esc(r.label)+'</h2>'+cliFiltHtml();
+  h+='<div class="stk" style="margin-block-start:6px"><div><small>CA</small><b>'+fmt(cur.ca)+'</b>'+(prv?pctChip(cur.ca,prv.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(cur.pf)+'</b>'+(prv?pctChip(cur.pf,prv.pf):'')+'</div><div><small>Commandes</small><b>'+cur.n+'</b>'+(prv?pctChip(cur.n,prv.n):'')+'</div><div><small>Marge</small><b>'+(cur.ca?Math.round(cur.pf/cur.ca*100)+' %':'—')+'</b><i class="eq">bénéfice / CA</i></div></div>';
+  if(prv)h+='<p class="hint" style="margin-block-start:8px">Période précédente ('+dShort(r.ps)+' – '+dShort(r.pe)+') : CA '+fmt(prv.ca)+' DH · bénéfice '+fmtS(prv.pf)+' · '+prv.n+' commande'+(prv.n>1?'s':'')+'</p>';
+  var pk=Object.keys(cur.prods).sort(function(a,b){return cur.prods[b].ca-cur.prods[a].ca});
+  if(pk.length)h+='<h2 style="margin-block:12px 4px;font-size:.95rem">Produits consommés</h2><div class="xscroll"><table class="ptab"><thead><tr><th>Produit</th><th>Quantité</th><th>CA</th><th>Bénéf.</th>'+(prv?'<th>Avant</th>':'')+'</tr></thead><tbody>'+pk.map(function(k){var x=cur.prods[k],pv=prv&&prv.prods[k];return '<tr><td>'+esc(k)+'</td><td>'+nfq(x.q)+(x.u?' '+esc(x.u):'')+'</td><td>'+fmt(x.ca)+'</td><td class="'+(x.pf>=0?'g':'bad')+'">'+fmtS(x.pf)+'</td>'+(prv?'<td>'+(pv?fmt(pv.ca):'—')+'</td>':'')+'</tr>'}).join('')+'</tbody></table></div>';
+  else h+='<p class="muted" style="margin-block-start:10px">Aucune commande sur cette période.</p>';
+  /* 8 dernières semaines */
+  var w0=weekStart(todayStr()),rows=[],i;
+  for(i=7;i>=0;i--){var ws=addDays(w0,-7*i),a=anAgg({s:ws,e:addDays(ws,6)},'__all',ids)[sel.id]||{ca:0,n:0};rows.push({name:'Sem. du '+dShort(ws),v:a.ca,ex:a.n?a.n+' commande'+(a.n>1?'s':''):''})}
+  h+='<h2 style="margin-block:12px 4px;font-size:.95rem">CA semaine par semaine</h2>'+stBars(rows);
+  return h+'</div>';
+}
+function cliListStats(list,ids){
+  var r=anRange(state.cliP||'all'),prod=state.cliProd||'__all',cur=anAgg(r,prod,ids),prv=r.ps?anAgg({s:r.ps,e:r.pe},prod,ids):null;
+  return {r:r,cur:cur,prv:prv};
+}
+/* graphique : ventes d'un produit semaine par semaine ou mois par mois */
+function ptBuckets(g){
+  var t=todayStr(),out=[],i;
+  if(g==='m'){var p=monthKey(t).split('-').map(Number);for(i=11;i>=0;i--){var d=new Date(Date.UTC(p[0],p[1]-1-i,1)),k=toYmd(d).slice(0,7);out.push({s:k+'-01',e:k+'-'+pad(daysInMonth(k)),label:MONTHS[d.getUTCMonth()],long:MONTHS_LONG[d.getUTCMonth()]+' '+k.slice(0,4)})}}
+  else{var w=weekStart(t);for(i=11;i>=0;i--){var s=addDays(w,-7*i);out.push({s:s,e:addDays(s,6),label:dShort(s).replace(/\s.*/,'')+'/'+(parseYmd(s).getUTCMonth()+1),long:'Semaine du '+dShort(s)})}}
+  return out;
+}
+function cmpC(c){var v=c/100;if(v>=10000)return Math.round(v/1000)+'k';if(v>=1000)return (v/1000).toFixed(1).replace('.0','')+'k';return String(Math.round(v))}
+function ptData(){
+  var g=state.ptG||'w',prod=state.ptProd||'__all',met=state.ptM||'ca',bk=ptBuckets(g);
+  if(prod==='__all'&&met==='q')met='ca';
+  var unit='';
+  bk.forEach(function(b){b.v=0});
+  (state.orders||[]).forEach(function(o){
+    if(o.cancelled||(prod!=='__all'&&o.product!==prod))return;
+    for(var i=0;i<bk.length;i++){if(o.date>=bk[i].s&&o.date<=bk[i].e){bk[i].v+=met==='ca'?(o.total||0):(met==='pf'?ordProfit(o):(o.qty||0));if(o.unit)unit=o.unit;break}}
+  });
+  if(met==='ca')(state.wOps||[]).forEach(function(o){
+    if(o.cancelled||o.type!=='vente'||o.order||o.aux||(prod!=='__all'&&o.product!==prod))return;
+    for(var i=0;i<bk.length;i++){if(o.date>=bk[i].s&&o.date<=bk[i].e){bk[i].v+=o.cents;break}}
+  });
+  return {bk:bk,met:met,g:g,prod:prod,unit:unit};
+}
+function ptCardHtml(){
+  var d=ptData(),prods=anProdList(),bk=d.bk,max=0,sum=0,best=null;
+  bk.forEach(function(b){if(b.v>max)max=b.v;sum+=b.v;if(!best||b.v>best.v)best=b});
+  var fv=function(v){return d.met==='q'?nfq(Math.round(v*100)/100)+(d.unit?' '+d.unit:''):(d.met==='pf'?fmtS(v):fmt(v))+' DH'};
+  var short=function(v){return d.met==='q'?nfq(Math.round(v)):cmpC(v)};
+  var W=360,H=170,pl=6,pr=6,pt=18,pb=26,bw=(W-pl-pr)/bk.length,ih=H-pt-pb;
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Évolution" style="width:100%;height:auto;display:block">';
+  bk.forEach(function(b,i){
+    var x=pl+i*bw,hh=max>0&&b.v>0?Math.max(2,Math.round(Math.abs(b.v)/max*ih)):0,y=pt+ih-hh,last=i===bk.length-1;
+    svg+='<g><title>'+esc(b.long)+' : '+fv(b.v)+'</title><rect x="'+(x+bw*0.14).toFixed(1)+'" y="'+y+'" width="'+(bw*0.72).toFixed(1)+'" height="'+hh+'" rx="3" style="fill:var(--vente);opacity:'+(last?1:.55)+'"/>'
+      +(b.v?'<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-4)+'" text-anchor="middle" style="font-size:8.5px;fill:var(--ink-2);font-family:var(--f-mono)">'+short(b.v)+'</text>':'')
+      +'<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" style="font-size:8.5px;fill:var(--ink-2)">'+esc(b.label)+'</text></g>';
+  });
+  svg+='<line x1="0" x2="'+W+'" y1="'+(pt+ih)+'" y2="'+(pt+ih)+'" style="stroke:var(--line)"/></svg>';
+  var cur=bk[bk.length-1],prv=bk[bk.length-2];
+  var chip=function(a,b,l,k){return '<button type="button" '+k+' aria-pressed="'+(a===b?'true':'false')+'">'+l+'</button>'};
+  var h='<div class="card" id="ptCard"><h2>Évolution d’un produit</h2>'
+    +'<select id="ptProd" aria-label="Produit" style="width:100%;min-height:46px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);margin-block-start:8px"><option value="__all">Tous les produits</option>'+prods.map(function(k){return '<option value="'+esc(k)+'"'+(k===d.prod?' selected':'')+'>'+esc(k)+'</option>'}).join('')+'</select>'
+    +'<div class="stp" style="padding-block:10px 2px">'+chip(d.g,'w','Par semaine','data-ptg="w"')+chip(d.g,'m','Par mois','data-ptg="m"')+'</div>'
+    +'<div class="stp" style="padding-block:6px 8px">'+chip(d.met,'ca','CA','data-ptm="ca"')+chip(d.met,'pf','Bénéfice','data-ptm="pf"')+(d.prod!=='__all'?chip(d.met,'q','Quantité','data-ptm="q"'):'')+'</div>'
+    +svg
+    +'<div class="stk" style="margin-block-start:10px"><div><small>'+(d.g==='m'?'Ce mois':'Cette semaine')+'</small><b>'+fv(cur.v)+'</b>'+pctChip(cur.v,prv.v)+'</div><div><small>'+(d.g==='m'?'Mois dernier':'Semaine dernière')+'</small><b>'+fv(prv.v)+'</b><i class="eq">précédent</i></div>'
+    +'<div><small>Moyenne</small><b>'+fv(Math.round(sum/bk.length))+'</b><i class="eq">sur '+bk.length+' '+(d.g==='m'?'mois':'semaines')+'</i></div><div><small>Meilleur</small><b>'+(best&&best.v>0?fv(best.v):'—')+'</b><i class="eq">'+(best&&best.v>0?esc(best.long):'')+'</i></div></div>'
+    +'<p class="hint" style="margin-block-start:8px">Basé sur les commandes de production'+(d.met==='ca'?' et les ventes directes avec produit':'')+'. Bénéfice = montant − quantité × coût de revient.</p></div>';
+  return h;
+}
 function renderClients(){
   var lc=$('cliList');if(!lc)return;
   if(state.credOps===null){lc.innerHTML='<p class="muted">Chargement…</p>';return}
@@ -1508,8 +1694,26 @@ function renderClients(){
   Object.keys(book).forEach(function(k){all[k]=Object.assign({},book[k],{phone:(state.clients[k]&&state.clients[k].phone)||''})});
   var cmode=state.cliMode||'cr';
   document.querySelectorAll('#cliModes button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.cm===cmode?'true':'false')});
-  $('cliTools').hidden=cmode!=='all';
-  var qk=nameKey(state.cliQ||''),list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){return b.name&&(!qk||nameKey(b.name).indexOf(qk)>=0)&&(cmode==='all'||b.due!==0)}).sort(function(a,b){if(cmode==='all')return state.cliSort==='ca'?(cliStats(b).ca-cliStats(a).ca||(a.name<b.name?-1:1)):(a.name.localeCompare(b.name,'fr'));return b.due-a.due||(a.name<b.name?-1:1)});
+  $('cliTools').hidden=cmode!=='all';$('cliFilt').hidden=cmode!=='all'||!!state.cliSel;
+  if(cmode==='all'&&!state.cliSel){var fe=document.activeElement;if(!(fe&&(fe.id==='cliFrom'||fe.id==='cliTo')))$('cliFilt').innerHTML=cliFiltHtml()+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-block-end:8px">'+cliProdSelHtml()+'</div>'}
+  $('cliSort').value=state.cliSort||'az';
+  var qk=nameKey(state.cliQ||''),AN=null,ids=anIds(all);
+  if(cmode==='all'){ensureWide();AN=cliListStats(null,ids)}
+  var gs=function(b,k){return AN?(AN.cur[b.id]||AN.cur['n:'+nameKey(b.name)]||{ca:0,pf:0,n:0,prods:{}}):{ca:0,pf:0,n:0,prods:{}}};
+  var gp=function(b){return AN&&AN.prv?(AN.prv[b.id]||AN.prv['n:'+nameKey(b.name)]||{ca:0,pf:0,n:0}):null};
+  var list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){
+    if(!b.name||(qk&&nameKey(b.name).indexOf(qk)<0))return false;
+    if(cmode!=='all')return b.due!==0;
+    if(state.cliProd&&state.cliProd!=='__all'&&!gs(b).n&&!(gp(b)&&gp(b).n))return false;
+    if(AN.r.p!=='all'&&!gs(b).n&&!(gp(b)&&gp(b).n)&&state.cliProd&&state.cliProd!=='__all')return false;
+    return true;
+  }).sort(function(a,b){
+    if(cmode!=='all')return b.due-a.due||(a.name<b.name?-1:1);
+    var sa=gs(a),sb=gs(b),pa=gp(a),pb=gp(b),so=state.cliSort||'az',d;
+    if(so==='ca')d=sb.ca-sa.ca;else if(so==='pf')d=sb.pf-sa.pf;else if(so==='n')d=sb.n-sa.n;else if(so==='due')d=b.due-a.due;
+    else if(so==='up')d=((sb.ca-(pb?pb.ca:0))-(sa.ca-(pa?pa.ca:0)));else if(so==='dn')d=((sa.ca-(pa?pa.ca:0))-(sb.ca-(pb?pb.ca:0)));
+    return d||(a.name.localeCompare(b.name,'fr'));
+  });
   var sel=state.cliSel&&all[state.cliSel]?all[state.cliSel]:null;
   $('cliListCard').hidden=!!sel;$('cliDet').hidden=!sel;
   if(sel){
@@ -1518,13 +1722,17 @@ function renderClients(){
     $('cliDet').innerHTML='<button type="button" class="linkbtn" data-cli-back="1">← Tous les clients</button><h2>'+esc(sel.name)+'</h2>'
       +'<div class="lrow"><span>Pris à crédit</span><b>'+fmt(pris)+' DH</b></div><div class="lrow"><span>Déjà payé</span><b>'+fmt(paye)+' DH</b></div><div class="lrow total"><span>'+(rest<0?'Avance':'Reste à payer')+'</span><b>'+fmt(rest)+' DH</b></div>'
       +(function(){var st=cliStats(sel);return '<div class="lrow"><span>Commandes ('+st.n+')</span><b>'+fmt(st.ca)+' DH</b></div><div class="lrow"><span>Bénéfice sur ses commandes</span><b>'+fmtS(st.pf)+'</b></div>'})()
+      +cliAnalysisCard(sel,all)
       +'<div class="field" style="gap:8px;margin-block-start:12px"><span>Fiche client</span><input id="cfName" maxlength="60" autocomplete="off" value="'+esc(sel.name)+'" aria-label="Nom" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%"><input id="cfPhone" inputmode="tel" maxlength="25" autocomplete="off" placeholder="Téléphone" value="'+esc(sel.phone||'')+'" aria-label="Téléphone" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%">'
       +'<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" data-cf-save="'+esc(sel.id)+'">Enregistrer la fiche</button><button type="button" class="mini'+(state.cliArm===sel.id?' arm':'')+'" data-cf-del="'+esc(sel.id)+'">'+(state.cliArm===sel.id?'Confirmer la suppression ?':'Supprimer le client')+'</button></div></div>'
       +'<div class="actions"><button class="primary" type="button" data-cli-pay="'+esc(sel.id)+'">Règlement / avance</button></div>'
+      +'<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-block-start:8px"><button class="ghost" type="button" data-cli-wai="'+esc(sel.id)+'">Envoyer le relevé (image) sur WhatsApp</button></div>'
       +(sel.ops.length?'<ul>'+clientOps(sel).slice(0,200).map(function(o){var r=o.type==='reglement';return '<li><span>'+dShort(o.date)+' · '+(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+esc(o.product):'')+(o.label?' · '+esc(o.label):'')+(o.agent?' · '+esc(o.agent):'')+'</span><b>'+(r?'−':'+')+fmt(o.cents)+'</b></li>'}).join('')+'</ul>':'<p class="muted">Aucun mouvement pour ce client.</p>');
     return;
   }
-  lc.innerHTML=list.length?list.map(function(b){var cls=b.due>0?'due':(b.due<0?'adv':'');return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+(cmode==='all'?'<small style="display:block;color:var(--ink-2)">'+(b.phone?esc(b.phone)+' · ':'')+'CA '+fmt(cliStats(b).ca)+' DH</small>':'')+'</span><b>'+(b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due):'Soldé'))+'</b></button>'}).join(''):'<p class="muted">'+(qk?'Aucun client de ce nom.':(cmode==='all'?'Aucun client pour l’instant. Chaque nom saisi sur une vente ou une commande est ajouté ici.':'Aucun crédit ni avance en cours.'))+'</p>';
+  if(cmode==='all'){var T={ca:0,pf:0,n:0,k:0},P={ca:0,pf:0,n:0,k:0};Object.keys(all).forEach(function(k){var b=all[k],x=gs(b),y=gp(b);T.ca+=x.ca;T.pf+=x.pf;T.n+=x.n;if(x.n)T.k++;if(y){P.ca+=y.ca;P.pf+=y.pf;P.n+=y.n;if(y.n)P.k++}});
+    var hasP=!!AN.prv;$('cliSum').innerHTML='<div class="stk" style="margin-block-end:10px"><div><small>CA</small><b>'+fmt(T.ca)+'</b>'+(hasP?pctChip(T.ca,P.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(T.pf)+'</b>'+(hasP?pctChip(T.pf,P.pf):'')+'</div><div><small>Clients actifs</small><b>'+T.k+'</b>'+(hasP?pctChip(T.k,P.k):'')+'</div><div><small>Commandes</small><b>'+T.n+'</b>'+(hasP?pctChip(T.n,P.n):'')+'</div></div>'+(hasP?'<p class="hint" style="margin-block-end:8px">'+esc(AN.r.label)+' · '+esc(AN.r.sub)+'</p>':'')}else $('cliSum').innerHTML='';
+  lc.innerHTML=list.length?list.map(function(b){var cls=b.due>0?'due':(b.due<0?'adv':'');if(cmode==='all'){var st=gs(b),pv=gp(b);return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'<small style="display:block;color:var(--ink-2)">'+(b.phone?esc(b.phone)+' · ':'')+st.n+' cmd · bénéf. '+fmtS(st.pf)+(b.due>0?' · dû '+fmt(b.due):(b.due<0?' · avance '+fmt(b.due):''))+'</small></span><b style="text-align:right;color:var(--ink)">'+fmt(st.ca)+' DH'+(pv?'<span style="display:block;font-family:var(--f-body);font-size:.75rem">'+pctChip(st.ca,pv.ca)+'</span>':'')+'</b></button>'}return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'</span><b>'+(b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due):'Soldé'))+'</b></button>'}).join(''):'<p class="muted">'+(qk?'Aucun client de ce nom.':(cmode==='all'?(Object.keys(all).length?'Aucun client pour ce filtre.':'Aucun client pour l’instant. Chaque nom saisi sur une vente ou une commande est ajouté ici.'):'Aucun crédit ni avance en cours.'))+'</p>';
 }
 /* ---------- produits ---------- */
 var LP_KEY='carnet-products-v1';
@@ -1986,6 +2194,7 @@ function renderStats(){
   var pl=Object.keys(prod).map(function(k){return prod[k]}).sort(function(a,b){return b.v-a.v}).slice(0,12),ptot=0;Object.keys(prod).forEach(function(k){ptot+=prod[k].v});
   pl.forEach(function(x){x.ex=x.n+' vente'+(x.n>1?'s':'')+' · '+(ptot?Math.round(x.v/ptot*100):0)+' % du CA · panier '+fmt(Math.round(x.v/x.n))+' DH'});
   h+='<div class="card"><h2>Produits</h2>'+stBars(pl)+'</div>';
+  h+=ptCardHtml();
   // agents
   var al=Object.keys(agent).map(function(k){return agent[k]}).sort(function(a,b){return b.v-a.v});
   al.forEach(function(x){x.ex=x.n+' vente'+(x.n>1?'s':'')+(x.n?' · panier '+fmt(Math.round(x.v/x.n))+' DH':'')+(x.rg?' · règlements '+fmt(x.rg)+' DH':'')+(x.c?' · charges '+fmt(x.c)+' DH':'')});
@@ -2088,6 +2297,7 @@ function setView(v){
   });
   $('weekbar').hidden=v==='mois'||v==='clients'||v==='stats'||v==='prods'||v==='orders'||v==='stock'||v==='reglages';
   if(v==='stock')renderStock();
+  if(v==='clients'||v==='stats')ensureWide();
   if(v==='orders'){renderOrdersView();if(store&&store.mode==='sheet'&&!state.ordRange){state.ordRange=1;store.subscribeOps(addDays(todayStr(),-60),todayStr(),function(){},onStoreErr)}}
   if(v==='prods'){if(store&&pdKey!==pdRange().s+'|'+pdRange().e)subscribeProds();else renderProds()}
   if(v==='stats'&&store&&stKey!==(state.stPeriod||'30'))subscribeStats();
@@ -2689,6 +2899,9 @@ function init(){
   $('cliQ').addEventListener('input',function(){state.cliQ=this.value;renderClients()});
   $('cliModes').addEventListener('click',function(e){var b=e.target.closest('button[data-cm]');if(!b)return;state.cliMode=b.dataset.cm;state.cliSel=null;renderClients()});
   $('cliSort').addEventListener('change',function(){state.cliSort=this.value;renderClients()});
+  $('view-clients').addEventListener('change',function(e){var t=e.target;if(t.id==='cliProd'){state.cliProd=t.value;renderClients()}else if(t.id==='cliFrom'){state.cliFrom=t.value;renderClients()}else if(t.id==='cliTo'){state.cliTo=t.value;renderClients()}});
+  $('stBox').addEventListener('click',function(e){var b;if((b=e.target.closest('[data-ptg]'))){state.ptG=b.dataset.ptg;renderStats()}else if((b=e.target.closest('[data-ptm]'))){state.ptM=b.dataset.ptm;renderStats()}});
+  $('stBox').addEventListener('change',function(e){if(e.target.id==='ptProd'){state.ptProd=e.target.value;if(state.ptProd==='__all'&&state.ptM==='q')state.ptM='ca';renderStats()}});
   $('cliNewBtn').addEventListener('click',function(){$('cliNew').hidden=false;$('cnName').focus()});
   $('cnCancel').addEventListener('click',function(){$('cliNew').hidden=true});
   $('cnSave').addEventListener('click',function(){
@@ -2716,6 +2929,8 @@ function init(){
       if(!store.delClient){toast('Non disponible dans ce mode.');return}
       store.delClient(did).then(function(){state.cliSel=null;toast('Client supprimé');renderClients()}).catch(function(x){toast(failMsg(x));renderClients()});
     }
+    else if((b=e.target.closest('[data-cli-wai]'))){cliWaImage(b.dataset.cliWai)}
+    else if((b=e.target.closest('[data-cp]'))){state.cliP=b.dataset.cp;renderClients()}
     else if((b=e.target.closest('[data-cli-pay]'))){var id=b.dataset.cliPay;setView('bons');$('t-reglement').checked=true;refreshForm();pickClient(id);$('amount').focus()}
   });
   $('prodManage').addEventListener('click',function(){var d=$('prodBox');d.open=true;d.scrollIntoView({block:'center'})});
