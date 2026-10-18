@@ -1501,7 +1501,7 @@ function renderCredits(){
   box.innerHTML=html;
 }
 function clientOps(b){return b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)||(y.date<x.date?-1:1)})}
-function cliStats(c){var ca=0,pf=0,n=0,k=nameKey(c.name);(state.orders||[]).forEach(function(o){if(o.cancelled)return;if((o.client&&o.client===c.id)||nameKey(o.clientName)===k){ca+=o.total;pf+=ordProfit(o);n++}});return {ca:ca,pf:pf,n:n}}
+function cliStats(c){var ca=0,pf=0,n=0,nd=0,k=nameKey(c.name),m=function(o){return (o.client&&o.client===c.id)||nameKey(o.clientName)===k};(state.orders||[]).forEach(function(o){if(o.cancelled||!m(o))return;ca+=o.total;pf+=ordProfit(o);n++});(state.wOps||[]).forEach(function(o){if(o.cancelled||o.type!=='vente'||o.order||o.aux||!m(o))return;ca+=o.cents;nd++});return {ca:ca,pf:pf,n:n,nd:nd}}
 
 /* ---- relevé client : WhatsApp (texte) ou image à partager ---- */
 function waPhone(ph){var d=String(ph||'').replace(/[^\d+]/g,'');if(d.indexOf('+')===0)d=d.slice(1);d=d.replace(/\D/g,'');if(d.indexOf('00')===0)d=d.slice(2);else if(d.length===10&&d.charAt(0)==='0')d='212'+d.slice(1);else if(d.length===9&&/^[5-7]/.test(d))d='212'+d;return d.length>=9?d:''}
@@ -1534,17 +1534,34 @@ function cliWaText(id){
   if(!p)toast('Pas de numéro valide : choisis le contact dans WhatsApp.');
   var a=document.createElement('a');a.href=(p?'https://wa.me/'+p+'?text=':'whatsapp://send?text=')+encodeURIComponent(cliStatementText(st));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
+
+function stmtMsg(m){try{if(typeof toast==='function')toast(m);else if(typeof pop==='function')pop(m)}catch(e){}}
+/* avec un numéro : on copie l'image puis on ouvre directement la discussion du client (il suffit de coller) */
+function stmtDirect(st,p,blobFn,fb){
+  var pr=new Promise(function(res){blobFn(st,res)});
+  var link='https://api.whatsapp.com/send?phone='+p+'&text='+encodeURIComponent('Bonjour '+st.name+', voici votre relevé de compte :');
+  var ok=false;
+  try{
+    if(navigator.clipboard&&navigator.clipboard.write&&window.ClipboardItem){
+      ok=true;
+      navigator.clipboard.write([new ClipboardItem({'image/png':pr.then(function(b){if(!b)throw new Error('img');return b})})]).then(function(){
+        stmtMsg('Image copiée : dans la discussion, appui long puis « Coller ».');
+        setTimeout(function(){location.href=link},900);
+      },function(){pr.then(fb)});
+    }
+  }catch(e){ok=false}
+  if(!ok)pr.then(fb);
+}
 function cliWaImage(id){
   var sel=cliFor(id);if(!sel)return;var st=cliStatement(sel),p=waPhone(sel.phone);
-  cliStatementBlob(st,function(blob){
+  var fb=function(blob){
     if(!blob){toast('Image impossible.');return}
     var f=new File([blob],'releve-'+nameKey(st.name).replace(/\s+/g,'-')+'.png',{type:'image/png'});
-    var done=false;
-    if(navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
-      done=true;navigator.share({files:[f],text:cliStatementText(st).split('\n').slice(0,6).join('\n')}).catch(function(e){if(e&&e.name!=='AbortError')cliWaPanel(st,blob,f.name,p)});
-    }
-    if(!done)cliWaPanel(st,blob,f.name,p);
-  });
+    if(!p&&navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
+      navigator.share({files:[f]}).catch(function(e){if(e&&e.name!=='AbortError')cliWaPanel(st,blob,f.name,p)});
+    }else cliWaPanel(st,blob,f.name,p);
+  };
+  if(p)stmtDirect(st,p,cliStatementBlob,fb);else cliStatementBlob(st,fb);
 }
 
 function cliWaPanel(st,blob,fname,p){
@@ -1603,9 +1620,17 @@ function anAgg(r,prod,ids){
   (state.orders||[]).forEach(function(o){
     if(o.cancelled||o.date<r.s||o.date>r.e)return;
     if(prod&&prod!=='__all'&&o.product!==prod)return;
-    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,pf:0,n:0,prods:{}});
-    a.ca+=o.total||0;a.pf+=ordProfit(o);a.n++;
+    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,co:0,pf:0,n:0,nd:0,prods:{}});
+    a.ca+=o.total||0;a.co+=o.total||0;a.pf+=ordProfit(o);a.n++;
     var p=a.prods[o.product]||(a.prods[o.product]={q:0,u:o.unit||'',ca:0,pf:0,n:0});p.q+=o.qty||0;p.ca+=o.total||0;p.pf+=ordProfit(o);p.n++;
+  });
+  /* ventes directes (bons sans commande) au nom du client : comptées dans le CA, bénéfice non calculable */
+  (state.wOps||[]).forEach(function(o){
+    if(o.cancelled||o.type!=='vente'||o.order||o.aux||o.date<r.s||o.date>r.e||!(o.client||o.clientName))return;
+    if(prod&&prod!=='__all'&&o.product!==prod)return;
+    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,co:0,pf:0,n:0,nd:0,prods:{}});
+    a.ca+=o.cents;a.nd++;
+    var pn=o.product||'Sans produit',p=a.prods[pn]||(a.prods[pn]={q:0,u:'',ca:0,pf:0,n:0,d:1});p.ca+=o.cents;p.n++;
   });
   return res;
 }
@@ -1620,16 +1645,16 @@ function cliProdSelHtml(){
   return '<select id="cliProd" aria-label="Produit" style="min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);max-width:100%"><option value="__all">Tous les produits</option>'+anProdList().map(function(k){return '<option value="'+esc(k)+'"'+(k===cur?' selected':'')+'>'+esc(k)+'</option>'}).join('')+'</select>';
 }
 function cliAnalysisCard(sel,all){
-  var ids=anIds(all),r=anRange(state.cliP||'all'),cur=anAgg(r,'__all',ids)[sel.id]||{ca:0,pf:0,n:0,prods:{}},prv=r.ps?(anAgg({s:r.ps,e:r.pe},'__all',ids)[sel.id]||{ca:0,pf:0,n:0,prods:{}}):null;
+  var ids=anIds(all),r=anRange(state.cliP||'all'),cur=anAgg(r,'__all',ids)[sel.id]||{ca:0,co:0,pf:0,n:0,nd:0,prods:{}},prv=r.ps?(anAgg({s:r.ps,e:r.pe},'__all',ids)[sel.id]||{ca:0,co:0,pf:0,n:0,nd:0,prods:{}}):null;
   var h='<div class="card" style="margin-block:12px;padding:12px"><h2 style="margin-block-end:4px">Analyse · '+esc(r.label)+'</h2>'+cliFiltHtml();
-  h+='<div class="stk" style="margin-block-start:6px"><div><small>CA</small><b>'+fmt(cur.ca)+'</b>'+(prv?pctChip(cur.ca,prv.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(cur.pf)+'</b>'+(prv?pctChip(cur.pf,prv.pf):'')+'</div><div><small>Commandes</small><b>'+cur.n+'</b>'+(prv?pctChip(cur.n,prv.n):'')+'</div><div><small>Marge</small><b>'+(cur.ca?Math.round(cur.pf/cur.ca*100)+' %':'—')+'</b><i class="eq">bénéfice / CA</i></div></div>';
+  h+='<div class="stk" style="margin-block-start:6px"><div><small>CA</small><b>'+fmt(cur.ca)+'</b>'+(prv?pctChip(cur.ca,prv.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(cur.pf)+'</b>'+(prv?pctChip(cur.pf,prv.pf):'')+'</div><div><small>Commandes</small><b>'+cur.n+'</b>'+(prv?pctChip(cur.n,prv.n):'')+'<i class="eq">'+(cur.nd?'+ '+cur.nd+' vente'+(cur.nd>1?'s':'')+' directe'+(cur.nd>1?'s':''):'production')+'</i></div><div><small>Marge commandes</small><b>'+(cur.co?Math.round(cur.pf/cur.co*100)+' %':'—')+'</b><i class="eq">bénéfice / CA commandes</i></div></div><p class="hint" style="margin-block-start:8px">CA = commandes de production + ventes directes au nom du client. Le bénéfice ne vient que des commandes (coût de revient connu).</p>';
   if(prv)h+='<p class="hint" style="margin-block-start:8px">Période précédente ('+dShort(r.ps)+' – '+dShort(r.pe)+') : CA '+fmt(prv.ca)+' DH · bénéfice '+fmtS(prv.pf)+' · '+prv.n+' commande'+(prv.n>1?'s':'')+'</p>';
   var pk=Object.keys(cur.prods).sort(function(a,b){return cur.prods[b].ca-cur.prods[a].ca});
-  if(pk.length)h+='<h2 style="margin-block:12px 4px;font-size:.95rem">Produits consommés</h2><div class="xscroll"><table class="ptab"><thead><tr><th>Produit</th><th>Quantité</th><th>CA</th><th>Bénéf.</th>'+(prv?'<th>Avant</th>':'')+'</tr></thead><tbody>'+pk.map(function(k){var x=cur.prods[k],pv=prv&&prv.prods[k];return '<tr><td>'+esc(k)+'</td><td>'+nfq(x.q)+(x.u?' '+esc(x.u):'')+'</td><td>'+fmt(x.ca)+'</td><td class="'+(x.pf>=0?'g':'bad')+'">'+fmtS(x.pf)+'</td>'+(prv?'<td>'+(pv?fmt(pv.ca):'—')+'</td>':'')+'</tr>'}).join('')+'</tbody></table></div>';
+  if(pk.length)h+='<h2 style="margin-block:12px 4px;font-size:.95rem">Produits consommés</h2><div class="xscroll"><table class="ptab"><thead><tr><th>Produit</th><th>Quantité</th><th>CA</th><th>Bénéf.</th>'+(prv?'<th>Avant</th>':'')+'</tr></thead><tbody>'+pk.map(function(k){var x=cur.prods[k],pv=prv&&prv.prods[k];return '<tr><td>'+esc(k)+'</td><td>'+(x.q?nfq(x.q)+(x.u?' '+esc(x.u):''):'—')+'</td><td>'+fmt(x.ca)+'</td><td class="'+(x.pf>=0?'g':'bad')+'">'+(x.d?'—':fmtS(x.pf))+'</td>'+(prv?'<td>'+(pv?fmt(pv.ca):'—')+'</td>':'')+'</tr>'}).join('')+'</tbody></table></div>';
   else h+='<p class="muted" style="margin-block-start:10px">Aucune commande sur cette période.</p>';
   /* 8 dernières semaines */
   var w0=weekStart(todayStr()),rows=[],i;
-  for(i=7;i>=0;i--){var ws=addDays(w0,-7*i),a=anAgg({s:ws,e:addDays(ws,6)},'__all',ids)[sel.id]||{ca:0,n:0};rows.push({name:'Sem. du '+dShort(ws),v:a.ca,ex:a.n?a.n+' commande'+(a.n>1?'s':''):''})}
+  for(i=7;i>=0;i--){var ws=addDays(w0,-7*i),a=anAgg({s:ws,e:addDays(ws,6)},'__all',ids)[sel.id]||{ca:0,n:0};rows.push({name:'Sem. du '+dShort(ws),v:a.ca,ex:(a.n||a.nd)?(a.n?a.n+' commande'+(a.n>1?'s':''):'')+(a.n&&a.nd?' · ':'')+(a.nd?a.nd+' vente'+(a.nd>1?'s':'')+' directe'+(a.nd>1?'s':''):''):''})}
   h+='<h2 style="margin-block:12px 4px;font-size:.95rem">CA semaine par semaine</h2>'+stBars(rows);
   return h+'</div>';
 }
@@ -1699,13 +1724,13 @@ function renderClients(){
   $('cliSort').value=state.cliSort||'az';
   var qk=nameKey(state.cliQ||''),AN=null,ids=anIds(all);
   if(cmode==='all'){ensureWide();AN=cliListStats(null,ids)}
-  var gs=function(b,k){return AN?(AN.cur[b.id]||AN.cur['n:'+nameKey(b.name)]||{ca:0,pf:0,n:0,prods:{}}):{ca:0,pf:0,n:0,prods:{}}};
-  var gp=function(b){return AN&&AN.prv?(AN.prv[b.id]||AN.prv['n:'+nameKey(b.name)]||{ca:0,pf:0,n:0}):null};
+  var gs=function(b,k){return AN?(AN.cur[b.id]||AN.cur['n:'+nameKey(b.name)]||{ca:0,co:0,pf:0,n:0,nd:0,prods:{}}):{ca:0,co:0,pf:0,n:0,nd:0,prods:{}}};
+  var gp=function(b){return AN&&AN.prv?(AN.prv[b.id]||AN.prv['n:'+nameKey(b.name)]||{ca:0,co:0,pf:0,n:0,nd:0}):null};
   var list=Object.keys(all).map(function(k){return all[k]}).filter(function(b){
     if(!b.name||(qk&&nameKey(b.name).indexOf(qk)<0))return false;
     if(cmode!=='all')return b.due!==0;
-    if(state.cliProd&&state.cliProd!=='__all'&&!gs(b).n&&!(gp(b)&&gp(b).n))return false;
-    if(AN.r.p!=='all'&&!gs(b).n&&!(gp(b)&&gp(b).n)&&state.cliProd&&state.cliProd!=='__all')return false;
+    if(state.cliProd&&state.cliProd!=='__all'&&!(gs(b).n||gs(b).nd)&&!(gp(b)&&(gp(b).n||gp(b).nd)))return false;
+    if(AN.r.p!=='all'&&!(gs(b).n||gs(b).nd)&&!(gp(b)&&(gp(b).n||gp(b).nd))&&state.cliProd&&state.cliProd!=='__all')return false;
     return true;
   }).sort(function(a,b){
     if(cmode!=='all')return b.due-a.due||(a.name<b.name?-1:1);
@@ -1721,7 +1746,7 @@ function renderClients(){
     var rest=pris-paye;
     $('cliDet').innerHTML='<button type="button" class="linkbtn" data-cli-back="1">← Tous les clients</button><h2>'+esc(sel.name)+'</h2>'
       +'<div class="lrow"><span>Pris à crédit</span><b>'+fmt(pris)+' DH</b></div><div class="lrow"><span>Déjà payé</span><b>'+fmt(paye)+' DH</b></div><div class="lrow total"><span>'+(rest<0?'Avance':'Reste à payer')+'</span><b>'+fmt(rest)+' DH</b></div>'
-      +(function(){var st=cliStats(sel);return '<div class="lrow"><span>Commandes ('+st.n+')</span><b>'+fmt(st.ca)+' DH</b></div><div class="lrow"><span>Bénéfice sur ses commandes</span><b>'+fmtS(st.pf)+'</b></div>'})()
+      +(function(){var st=cliStats(sel);return '<div class="lrow"><span>CA total ('+st.n+' commande'+(st.n>1?'s':'')+(st.nd?' + '+st.nd+' vente'+(st.nd>1?'s':'')+' directe'+(st.nd>1?'s':''):'')+')</span><b>'+fmt(st.ca)+' DH</b></div><div class="lrow"><span>Bénéfice sur ses commandes</span><b>'+fmtS(st.pf)+'</b></div>'})()
       +cliAnalysisCard(sel,all)
       +'<div class="field" style="gap:8px;margin-block-start:12px"><span>Fiche client</span><input id="cfName" maxlength="60" autocomplete="off" value="'+esc(sel.name)+'" aria-label="Nom" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%"><input id="cfPhone" inputmode="tel" maxlength="25" autocomplete="off" placeholder="Téléphone" value="'+esc(sel.phone||'')+'" aria-label="Téléphone" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%">'
       +'<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" data-cf-save="'+esc(sel.id)+'">Enregistrer la fiche</button><button type="button" class="mini'+(state.cliArm===sel.id?' arm':'')+'" data-cf-del="'+esc(sel.id)+'">'+(state.cliArm===sel.id?'Confirmer la suppression ?':'Supprimer le client')+'</button></div></div>'
@@ -1730,9 +1755,9 @@ function renderClients(){
       +(sel.ops.length?'<ul>'+clientOps(sel).slice(0,200).map(function(o){var r=o.type==='reglement';return '<li><span>'+dShort(o.date)+' · '+(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+esc(o.product):'')+(o.label?' · '+esc(o.label):'')+(o.agent?' · '+esc(o.agent):'')+'</span><b>'+(r?'−':'+')+fmt(o.cents)+'</b></li>'}).join('')+'</ul>':'<p class="muted">Aucun mouvement pour ce client.</p>');
     return;
   }
-  if(cmode==='all'){var T={ca:0,pf:0,n:0,k:0},P={ca:0,pf:0,n:0,k:0};Object.keys(all).forEach(function(k){var b=all[k],x=gs(b),y=gp(b);T.ca+=x.ca;T.pf+=x.pf;T.n+=x.n;if(x.n)T.k++;if(y){P.ca+=y.ca;P.pf+=y.pf;P.n+=y.n;if(y.n)P.k++}});
-    var hasP=!!AN.prv;$('cliSum').innerHTML='<div class="stk" style="margin-block-end:10px"><div><small>CA</small><b>'+fmt(T.ca)+'</b>'+(hasP?pctChip(T.ca,P.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(T.pf)+'</b>'+(hasP?pctChip(T.pf,P.pf):'')+'</div><div><small>Clients actifs</small><b>'+T.k+'</b>'+(hasP?pctChip(T.k,P.k):'')+'</div><div><small>Commandes</small><b>'+T.n+'</b>'+(hasP?pctChip(T.n,P.n):'')+'</div></div>'+(hasP?'<p class="hint" style="margin-block-end:8px">'+esc(AN.r.label)+' · '+esc(AN.r.sub)+'</p>':'')}else $('cliSum').innerHTML='';
-  lc.innerHTML=list.length?list.map(function(b){var cls=b.due>0?'due':(b.due<0?'adv':'');if(cmode==='all'){var st=gs(b),pv=gp(b);return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'<small style="display:block;color:var(--ink-2)">'+(b.phone?esc(b.phone)+' · ':'')+st.n+' cmd · bénéf. '+fmtS(st.pf)+(b.due>0?' · dû '+fmt(b.due):(b.due<0?' · avance '+fmt(b.due):''))+'</small></span><b style="text-align:right;color:var(--ink)">'+fmt(st.ca)+' DH'+(pv?'<span style="display:block;font-family:var(--f-body);font-size:.75rem">'+pctChip(st.ca,pv.ca)+'</span>':'')+'</b></button>'}return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'</span><b>'+(b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due):'Soldé'))+'</b></button>'}).join(''):'<p class="muted">'+(qk?'Aucun client de ce nom.':(cmode==='all'?(Object.keys(all).length?'Aucun client pour ce filtre.':'Aucun client pour l’instant. Chaque nom saisi sur une vente ou une commande est ajouté ici.'):'Aucun crédit ni avance en cours.'))+'</p>';
+  if(cmode==='all'){var T={ca:0,pf:0,n:0,k:0},P={ca:0,pf:0,n:0,k:0};Object.keys(all).forEach(function(k){var b=all[k],x=gs(b),y=gp(b);T.ca+=x.ca;T.pf+=x.pf;T.n+=x.n+x.nd;if(x.n||x.nd)T.k++;if(y){P.ca+=y.ca;P.pf+=y.pf;P.n+=y.n+y.nd;if(y.n||y.nd)P.k++}});
+    var hasP=!!AN.prv;$('cliSum').innerHTML='<div class="stk" style="margin-block-end:10px"><div><small>CA</small><b>'+fmt(T.ca)+'</b>'+(hasP?pctChip(T.ca,P.ca):'')+'</div><div><small>Bénéfice</small><b>'+fmtS(T.pf)+'</b>'+(hasP?pctChip(T.pf,P.pf):'')+'</div><div><small>Clients actifs</small><b>'+T.k+'</b>'+(hasP?pctChip(T.k,P.k):'')+'</div><div><small>Commandes et ventes</small><b>'+T.n+'</b>'+(hasP?pctChip(T.n,P.n):'')+'</div></div>'+(hasP?'<p class="hint" style="margin-block-end:8px">'+esc(AN.r.label)+' · '+esc(AN.r.sub)+'</p>':'')}else $('cliSum').innerHTML='';
+  lc.innerHTML=list.length?list.map(function(b){var cls=b.due>0?'due':(b.due<0?'adv':'');if(cmode==='all'){var st=gs(b),pv=gp(b);return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'<small style="display:block;color:var(--ink-2)">'+(b.phone?esc(b.phone)+' · ':'')+st.n+' cmd'+(st.nd?' + '+st.nd+' vente'+(st.nd>1?'s':''):'')+' · bénéf. '+fmtS(st.pf)+(b.due>0?' · dû '+fmt(b.due):(b.due<0?' · avance '+fmt(b.due):''))+'</small></span><b style="text-align:right;color:var(--ink)">'+fmt(st.ca)+' DH'+(pv?'<span style="display:block;font-family:var(--f-body);font-size:.75rem">'+pctChip(st.ca,pv.ca)+'</span>':'')+'</b></button>'}return '<button type="button" class="cli '+cls+'" data-cli="'+esc(b.id)+'"><span>'+esc(b.name)+'</span><b>'+(b.due>0?fmt(b.due)+' DH':(b.due<0?'Avance '+fmt(b.due):'Soldé'))+'</b></button>'}).join(''):'<p class="muted">'+(qk?'Aucun client de ce nom.':(cmode==='all'?(Object.keys(all).length?'Aucun client pour ce filtre.':'Aucun client pour l’instant. Chaque nom saisi sur une vente ou une commande est ajouté ici.'):'Aucun crédit ni avance en cours.'))+'</p>';
 }
 /* ---------- produits ---------- */
 var LP_KEY='carnet-products-v1';
