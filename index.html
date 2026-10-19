@@ -1501,7 +1501,7 @@ function renderCredits(){
   box.innerHTML=html;
 }
 function clientOps(b){return b.ops.slice().sort(function(x,y){return (y.ts||0)-(x.ts||0)||(y.date<x.date?-1:1)})}
-function cliStats(c){var ca=0,pf=0,n=0,nd=0,k=nameKey(c.name),m=function(o){return (o.client&&o.client===c.id)||nameKey(o.clientName)===k};(state.orders||[]).forEach(function(o){if(o.cancelled||!m(o))return;ca+=o.total;pf+=ordProfit(o);n++});(state.wOps||[]).forEach(function(o){if(o.cancelled||o.type!=='vente'||o.order||o.aux||!m(o))return;ca+=o.cents;nd++});return {ca:ca,pf:pf,n:n,nd:nd}}
+function cliStats(c,ids){var x=anAgg({s:'0000-00-00',e:'9999-99-99'},'__all',ids||anIds({}))[c.id]||anAgg({s:'0000-00-00',e:'9999-99-99'},'__all',ids||anIds({}))['n:'+nameKey(c.name)]||{ca:0,pf:0,n:0,nd:0};return {ca:x.ca,pf:x.pf,n:x.n,nd:x.nd}}
 
 /* ---- relevé client : WhatsApp (texte) ou image à partager ---- */
 function waPhone(ph){var d=String(ph||'').replace(/[^\d+]/g,'');if(d.indexOf('+')===0)d=d.slice(1);d=d.replace(/\D/g,'');if(d.indexOf('00')===0)d=d.slice(2);else if(d.length===10&&d.charAt(0)==='0')d='212'+d.slice(1);else if(d.length===9&&/^[5-7]/.test(d))d='212'+d;return d.length>=9?d:''}
@@ -1539,38 +1539,39 @@ function stmtMsg(m){try{if(typeof toast==='function')toast(m);else if(typeof pop
 /* avec un numéro : on copie l'image puis on ouvre directement la discussion du client (il suffit de coller) */
 function stmtDirect(st,p,blobFn,fb){
   var pr=new Promise(function(res){blobFn(st,res)});
-  var link='https://api.whatsapp.com/send?phone='+p+'&text='+encodeURIComponent('Bonjour '+st.name+', voici votre relevé de compte :');
   var ok=false;
   try{
     if(navigator.clipboard&&navigator.clipboard.write&&window.ClipboardItem){
       ok=true;
-      navigator.clipboard.write([new ClipboardItem({'image/png':pr.then(function(b){if(!b)throw new Error('img');return b})})]).then(function(){
-        stmtMsg('Image copiée : dans la discussion, appui long puis « Coller ».');
-        setTimeout(function(){location.href=link},900);
-      },function(){pr.then(fb)});
+      navigator.clipboard.write([new ClipboardItem({'image/png':pr.then(function(b){if(!b)throw new Error('img');return b})})]).then(function(){pr.then(function(b){fb(b,true)})},function(){pr.then(function(b){fb(b,false)})});
     }
   }catch(e){ok=false}
-  if(!ok)pr.then(fb);
+  if(!ok)pr.then(function(b){fb(b,false)});
 }
 function cliWaImage(id){
-  var sel=cliFor(id);if(!sel)return;var st=cliStatement(sel),p=waPhone(sel.phone);
-  var fb=function(blob){
+  var sel=cliFor(id);if(!sel)return;var st=cliStatement(sel),p='';/* comme sans numéro : partage de l'image, on choisit le contact */
+  var fb=function(blob,copied){
     if(!blob){toast('Image impossible.');return}
     var f=new File([blob],'releve-'+nameKey(st.name).replace(/\s+/g,'-')+'.png',{type:'image/png'});
     if(!p&&navigator.canShare&&navigator.canShare({files:[f]})&&navigator.share){
       navigator.share({files:[f]}).catch(function(e){if(e&&e.name!=='AbortError')cliWaPanel(st,blob,f.name,p)});
-    }else cliWaPanel(st,blob,f.name,p);
+    }else cliWaPanel(st,blob,f.name,p,copied);
   };
   if(p)stmtDirect(st,p,cliStatementBlob,fb);else cliStatementBlob(st,fb);
 }
 
-function cliWaPanel(st,blob,fname,p){
+function cliWaPanel(st,blob,fname,p,copied){
   var old=document.getElementById('waPanel');if(old)old.remove();
-  var url=URL.createObjectURL(blob),wa='https://api.whatsapp.com/send?'+(p?'phone='+p+'&':'')+'text='+encodeURIComponent('Bonjour '+st.name+', voici votre relevé de compte.');
+  var url=URL.createObjectURL(blob),wa='https://api.whatsapp.com/send?'+(p?'phone='+p+'&':'')+'text='+encodeURIComponent('Bonjour '+st.name+', voici votre relevé de compte :');
+  var f=null,canShare=false;try{f=new File([blob],fname,{type:'image/png'});canShare=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){}
   var d=document.createElement('div');d.id='waPanel';d.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:12px';
-  d.innerHTML='<div style="background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px"><b>Relevé de '+esc(st.name)+'</b><img src="'+url+'" alt="Relevé" style="width:100%;border:1px solid var(--line,#ccc);border-radius:8px"><p class="muted" style="margin:0">Appuie longuement sur l’image pour l’enregistrer ou la copier, puis ouvre WhatsApp et colle-la.</p><a class="primary" id="waDl" href="'+url+'" download="'+esc(fname)+'" style="text-align:center;text-decoration:none;padding:14px;border-radius:12px;background:#1d3fa3;color:#fff;font-weight:700">Enregistrer l’image</a><a id="waGo" href="'+wa+'" target="_top" rel="noopener" style="text-align:center;text-decoration:none;padding:14px;border-radius:12px;background:#1b7a4c;color:#fff;font-weight:700">Ouvrir WhatsApp'+(p?'':' (choisir le contact)')+'</a><button type="button" class="ghost" id="waX">Fermer</button></div>';
+  var btn='text-align:center;text-decoration:none;padding:14px;border-radius:12px;color:#fff;font-weight:700;border:0;font-size:1rem;cursor:pointer';
+  d.innerHTML='<div style="background:var(--surface,#fff);color:var(--ink,#111);border-radius:16px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px"><b>Relevé de '+esc(st.name)+(copied?' · image copiée ✓':'')+'</b><img src="'+url+'" alt="Relevé" style="width:100%;border:1px solid var(--line,#ccc);border-radius:8px;max-height:38vh;object-fit:contain"><p style="margin:0;font-size:.9rem">'+(copied?'<b>1.</b> Ouvre la discussion. <b>2.</b> Appuie longuement dans la zone de message, puis « Coller ». <b>3.</b> Envoie.':'Appuie longuement sur l’image pour la copier ou l’enregistrer, puis ouvre WhatsApp et colle-la.')+'</p><a id="waGo" href="'+wa+'" target="_top" rel="noopener" style="'+btn+';background:#1b7a4c">Ouvrir la discussion'+(p?' du client':' WhatsApp (choisir le contact)')+'</a>'+(canShare?'<button type="button" id="waSh" style="'+btn+';background:#1d3fa3">Partager l’image (choisir le contact)</button>':'')+'<a href="'+url+'" download="'+esc(fname)+'" style="'+btn+';background:#555">Enregistrer l’image</a><button type="button" id="waX" style="min-height:46px;border:1.5px solid var(--line,#ccc);border-radius:12px;background:none;color:inherit;font-weight:600">Fermer</button></div>';
   document.body.appendChild(d);
-  d.addEventListener('click',function(e){if(e.target===d||e.target.id==='waX')d.remove()});
+  d.addEventListener('click',function(e){
+    if(e.target===d||e.target.id==='waX')d.remove();
+    else if(e.target.id==='waSh'&&f)navigator.share({files:[f]}).catch(function(){});
+  });
 }
 function cliFor(id){
   var book=creditBook(),o=null;
@@ -1586,6 +1587,16 @@ function ensureWide(){
   state.wideSub=1;var t=todayStr();
   store.subscribeOps(addDays(t,-400),t,function(rows){state.wOps=rows;if(state.view==='stats')renderStats();if(state.view==='clients')renderClients()},onStoreErr);
 }
+/* montant réellement facturé d'une commande payée = somme de ses bons (le prix a pu être modifié à l'encaissement) */
+function effBuild(){
+  if(state._effW===state.wOps&&state._effM)return;
+  var m={},w={};(state.wOps||[]).forEach(function(x){if(x.cancelled||x.type!=='vente'||!x.order)return;m[x.order]=(m[x.order]||0)+x.cents;if(!w[x.order]&&(x.client||x.clientName))w[x.order]={client:x.client||'',clientName:x.clientName||''}});
+  state._effM=m;state._effWho=w;state._effW=state.wOps;
+}
+function ordEff(o){effBuild();return (o.status==='paid'&&state._effM[o.id]!=null)?state._effM[o.id]:(o.total||0)}
+/* client réellement facturé : celui écrit sur les bons à l'encaissement (il peut différer de celui de la commande) */
+function ordWho(o){effBuild();var w=o.status==='paid'&&state._effWho[o.id];return w?{client:w.client||o.client,clientName:w.clientName||o.clientName}:o}
+function ordPf(o){return ordEff(o)-ordUnitCost(o)}
 function anRange(p){
   var t=todayStr(),s,e,ps,pe,n,lab;
   if(p==='all')return {p:p,s:'0000-00-00',e:'9999-99-99',ps:null,pe:null,label:'Depuis le début'};
@@ -1615,26 +1626,41 @@ function anClientKey(o,ids){
   var k=nameKey(o.clientName||'');return k&&ids.byName[k]?ids.byName[k]:(o.client||('n:'+k));
 }
 function anIds(all){var by={},bn={};Object.keys(all).forEach(function(k){by[k]=1;bn[nameKey(all[k].name)]=k});return {byId:by,byName:bn}}
+/* Ventes : chaque bon de vente est une unité (c'est la vérité de ce qui a été facturé). Une commande payée = ses bons ; une commande non payée = son total. */
+function saleUnits(){
+  if(state._unW===state.wOps&&state._unO===state.orders&&state._un)return state._un;
+  effBuild();
+  var byId={},units=[];(state.orders||[]).forEach(function(o){byId[o.id]=o});
+  (state.wOps||[]).forEach(function(x){
+    if(x.cancelled||x.type!=='vente')return;
+    var ord=x.order&&byId[x.order]&&!byId[x.order].cancelled?byId[x.order]:null;
+    if(ord){var eff=state._effM[ord.id]||x.cents,sh=eff?x.cents/eff:1;
+      units.push({d:x.date,who:{client:x.client||'',clientName:x.clientName||ord.clientName},prod:ord.product,unit:ord.unit||'',c:x.cents,q:(ord.qty||0)*sh,cost:ordUnitCost(ord)*sh,ord:ord.id,direct:false})}
+    else units.push({d:x.date,who:{client:x.client||'',clientName:x.clientName||''},prod:x.product||'Sans produit',unit:'',c:x.cents,q:0,cost:0,ord:'',direct:true});
+  });
+  (state.orders||[]).forEach(function(o){
+    if(o.cancelled)return;
+    if(o.status==='paid'&&state._effM[o.id]!=null)return;
+    units.push({d:o.date,who:{client:o.client,clientName:o.clientName},prod:o.product,unit:o.unit||'',c:o.total||0,q:o.qty||0,cost:ordUnitCost(o),ord:o.id,direct:false,open:true});
+  });
+  state._un=units;state._unW=state.wOps;state._unO=state.orders;return units;
+}
 function anAgg(r,prod,ids){
   var res={};
-  (state.orders||[]).forEach(function(o){
-    if(o.cancelled||o.date<r.s||o.date>r.e)return;
-    if(prod&&prod!=='__all'&&o.product!==prod)return;
-    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,co:0,pf:0,n:0,nd:0,prods:{}});
-    a.ca+=o.total||0;a.co+=o.total||0;a.pf+=ordProfit(o);a.n++;
-    var p=a.prods[o.product]||(a.prods[o.product]={q:0,u:o.unit||'',ca:0,pf:0,n:0});p.q+=o.qty||0;p.ca+=o.total||0;p.pf+=ordProfit(o);p.n++;
-  });
-  /* ventes directes (bons sans commande) au nom du client : comptées dans le CA, bénéfice non calculable */
-  (state.wOps||[]).forEach(function(o){
-    if(o.cancelled||o.type!=='vente'||o.order||o.aux||o.date<r.s||o.date>r.e||!(o.client||o.clientName))return;
-    if(prod&&prod!=='__all'&&o.product!==prod)return;
-    var k=anClientKey(o,ids),a=res[k]||(res[k]={ca:0,co:0,pf:0,n:0,nd:0,prods:{}});
-    a.ca+=o.cents;a.nd++;
-    var pn=o.product||'Sans produit',p=a.prods[pn]||(a.prods[pn]={q:0,u:'',ca:0,pf:0,n:0,d:1});p.ca+=o.cents;p.n++;
+  saleUnits().forEach(function(u){
+    if(u.d<r.s||u.d>r.e)return;
+    if(prod&&prod!=='__all'&&u.prod!==prod)return;
+    if(!(u.who.client||u.who.clientName))return;
+    var k=anClientKey(u.who,ids),a=res[k]||(res[k]={ca:0,co:0,pf:0,n:0,nd:0,prods:{},_o:{}});
+    a.ca+=u.c;
+    var p=a.prods[u.prod]||(a.prods[u.prod]={q:0,u:u.unit,ca:0,pf:0,n:0});
+    p.ca+=u.c;
+    if(u.direct){a.nd++;p.d=1;p.n++}
+    else{a.co+=u.c;a.pf+=u.c-u.cost;p.q+=u.q;p.pf+=u.c-u.cost;if(!a._o[u.ord]){a._o[u.ord]=1;a.n++;p.n++}}
   });
   return res;
 }
-function anProdList(){var m={};(state.orders||[]).forEach(function(o){if(o.product)m[o.product]=1});return Object.keys(m).sort(function(a,b){return a.localeCompare(b,'fr')})}
+function anProdList(){var m={};(state.orders||[]).forEach(function(o){if(o.product)m[o.product]=1});(state.wOps||[]).forEach(function(o){if(!o.cancelled&&o.type==='vente'&&!o.order&&o.product)m[o.product]=1});return Object.keys(m).sort(function(a,b){return a.localeCompare(b,'fr')})}
 function cliFiltHtml(){
   var p=state.cliP||'all',h='<div class="stp" id="cliPer" role="group" aria-label="Période" style="padding-block:4px 6px">'+CLI_PERIODS.map(function(x){return '<button type="button" data-cp="'+x[0]+'" aria-pressed="'+(x[0]===p?'true':'false')+'">'+x[1]+'</button>'}).join('')+'</div>';
   if(p==='c'){var r=anRange('c');h+='<div style="display:flex;gap:8px;margin-block-end:8px"><input type="date" id="cliFrom" value="'+r.s+'" aria-label="Du" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"><input type="date" id="cliTo" value="'+r.e+'" aria-label="Au" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"></div>'}
@@ -1675,13 +1701,10 @@ function ptData(){
   if(prod==='__all'&&met==='q')met='ca';
   var unit='';
   bk.forEach(function(b){b.v=0});
-  (state.orders||[]).forEach(function(o){
-    if(o.cancelled||(prod!=='__all'&&o.product!==prod))return;
-    for(var i=0;i<bk.length;i++){if(o.date>=bk[i].s&&o.date<=bk[i].e){bk[i].v+=met==='ca'?(o.total||0):(met==='pf'?ordProfit(o):(o.qty||0));if(o.unit)unit=o.unit;break}}
-  });
-  if(met==='ca')(state.wOps||[]).forEach(function(o){
-    if(o.cancelled||o.type!=='vente'||o.order||o.aux||(prod!=='__all'&&o.product!==prod))return;
-    for(var i=0;i<bk.length;i++){if(o.date>=bk[i].s&&o.date<=bk[i].e){bk[i].v+=o.cents;break}}
+  saleUnits().forEach(function(u){
+    if(prod!=='__all'&&u.prod!==prod)return;
+    if(met!=='ca'&&u.direct)return;
+    for(var i=0;i<bk.length;i++){if(u.d>=bk[i].s&&u.d<=bk[i].e){bk[i].v+=met==='ca'?u.c:(met==='pf'?u.c-u.cost:u.q);if(u.unit)unit=u.unit;break}}
   });
   return {bk:bk,met:met,g:g,prod:prod,unit:unit};
 }
@@ -1746,7 +1769,7 @@ function renderClients(){
     var rest=pris-paye;
     $('cliDet').innerHTML='<button type="button" class="linkbtn" data-cli-back="1">← Tous les clients</button><h2>'+esc(sel.name)+'</h2>'
       +'<div class="lrow"><span>Pris à crédit</span><b>'+fmt(pris)+' DH</b></div><div class="lrow"><span>Déjà payé</span><b>'+fmt(paye)+' DH</b></div><div class="lrow total"><span>'+(rest<0?'Avance':'Reste à payer')+'</span><b>'+fmt(rest)+' DH</b></div>'
-      +(function(){var st=cliStats(sel);return '<div class="lrow"><span>CA total ('+st.n+' commande'+(st.n>1?'s':'')+(st.nd?' + '+st.nd+' vente'+(st.nd>1?'s':'')+' directe'+(st.nd>1?'s':''):'')+')</span><b>'+fmt(st.ca)+' DH</b></div><div class="lrow"><span>Bénéfice sur ses commandes</span><b>'+fmtS(st.pf)+'</b></div>'})()
+      +(function(){var st=cliStats(sel,ids);return '<div class="lrow"><span>CA total ('+st.n+' commande'+(st.n>1?'s':'')+(st.nd?' + '+st.nd+' vente'+(st.nd>1?'s':'')+' directe'+(st.nd>1?'s':''):'')+')</span><b>'+fmt(st.ca)+' DH</b></div><div class="lrow"><span>Bénéfice sur ses commandes</span><b>'+fmtS(st.pf)+'</b></div>'})()
       +cliAnalysisCard(sel,all)
       +'<div class="field" style="gap:8px;margin-block-start:12px"><span>Fiche client</span><input id="cfName" maxlength="60" autocomplete="off" value="'+esc(sel.name)+'" aria-label="Nom" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%"><input id="cfPhone" inputmode="tel" maxlength="25" autocomplete="off" placeholder="Téléphone" value="'+esc(sel.phone||'')+'" aria-label="Téléphone" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%">'
       +'<div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" data-cf-save="'+esc(sel.id)+'">Enregistrer la fiche</button><button type="button" class="mini'+(state.cliArm===sel.id?' arm':'')+'" data-cf-del="'+esc(sel.id)+'">'+(state.cliArm===sel.id?'Confirmer la suppression ?':'Supprimer le client')+'</button></div></div>'
