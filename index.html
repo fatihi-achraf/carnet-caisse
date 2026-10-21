@@ -1385,6 +1385,10 @@ function rowHtml(o,num){
   var cb=o.cancelled?who(o.cancelledBy):'';
   var tl=isR?'Règlement':(isV?'Vente':'Charge');
   var lbl=o.clientName?'<b>'+esc(o.clientName)+'</b>'+(o.label?' · '+esc(o.label):''):(esc(o.label)||tl);
+  /* bon d'une commande (machiniste ou vente quick) : nom, puis métrage × prix, puis note */
+  var ordO=(o.order&&!o.aux&&isV&&o.clientName)?(state.orders||[]).find(function(x){return x.id===o.order}):null,sub='display:block;font-weight:400;font-size:.9rem;color:var(--ink-2)';
+  if(ordO){lbl='<b>'+esc(o.clientName)+'</b><span style="'+sub+'">'+nfq(ordO.qty)+(ordO.unit?' '+esc(ordO.unit):'')+' × '+fmt(ordO.price)+' DH</span>'+(ordO.note?'<span style="'+sub+'">'+esc(ordO.note)+'</span>':'')}
+  else if(isV&&o.clientName&&o.label&&!o.aux&&/×\s*\d/.test(o.label)){var lp=o.label.split(' · ');lbl='<b>'+esc(o.clientName)+'</b><span style="'+sub+'">'+esc(lp[0])+'</span>'+(lp.length>1?'<span style="'+sub+'">'+esc(lp.slice(1).join(' · '))+'</span>':'')}
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+(o.cancelled?' cancelled':'')+'">'
     +'<span class="num">#'+num+'</span>'
     +'<div><div class="lbl">'+lbl+'</div>'
