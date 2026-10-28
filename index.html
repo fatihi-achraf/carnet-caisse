@@ -92,7 +92,7 @@ button{cursor:pointer}
 .field>span{font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
 .field input,.field textarea{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
 .field textarea{resize:vertical;min-height:72px}
-.field input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;min-height:46px;text-align:left;line-height:normal}.field input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.field input[type=date],.field input[type=month]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;min-height:46px;text-align:left;line-height:normal}.field input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
 .field select{width:100%;min-width:0;min-height:46px;padding:10px 40px 10px 12px;border:1px solid var(--line);border-radius:10px;background-color:var(--surface);color:var(--ink);font:inherit;font-weight:500;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a94b3' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:16px;text-overflow:ellipsis}
 .field select:focus{outline:2px solid var(--ink-2);outline-offset:1px}
 .money{position:relative}
@@ -319,6 +319,10 @@ button{cursor:pointer}
 .sk.low .q,.sk.low small.alt{color:var(--charge);font-weight:700}
 .skrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .alertbox.pv{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.pvsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-block:12px}.pvsum div{padding:10px 12px;border-radius:12px;background:var(--surface-2)}.pvsum span{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:600}.pvsum b{font-family:var(--f-mono);font-size:1.2rem}
+.pvc{border:1px solid var(--line);border-radius:14px;padding:14px;margin-block-start:10px;background:var(--surface);display:flex;flex-direction:column;gap:6px}.pvc .t{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.pvc .t b.n{font-size:1.1rem}.pvc .t b.m{font-family:var(--f-mono);font-size:1.35rem;white-space:nowrap}.pvc .s{color:var(--ink-2);font-size:.86rem}.pvc .l{font-size:.92rem}
+.pvc .bt{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin-block-start:6px}.pvc .bt button{min-height:52px;border-radius:12px;font-weight:700;font-size:1rem;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink)}.pvc .bt .ok{background:var(--ok);border-color:var(--ok);color:#fff}.pvc .bt .arm{background:var(--bad-bg);border-color:var(--charge);color:var(--charge)}
+.pvall{width:100%;min-height:54px;margin-block-start:12px;border-radius:12px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);font-weight:800;font-size:1rem}.pvall.arm{background:var(--ok);color:#fff}
 .frl .acts2{display:flex;gap:8px;flex-wrap:wrap;margin-block-start:8px}
 .frl .acts2 .ok{background:var(--ok-bg);border:1.5px solid var(--ok);color:var(--ok);font-weight:700}
 .al-prev{color:var(--ink-2);font-size:.82rem}.al-prev .up{color:var(--charge);font-weight:700}.al-prev .dn{color:var(--ok);font-weight:700}
@@ -430,6 +434,7 @@ button{cursor:pointer}
         <p class="err" id="formErr" role="alert" hidden></p>
         <button class="primary" id="saveBtn" type="submit">Enregistrer la vente</button>
       </form>
+      <div style="margin-block:10px"><input type="search" id="bonQ" autocomplete="off" placeholder="Chercher par nom du client ou montant" aria-label="Chercher un bon" style="width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"></div>
       <div class="filters" id="filters" hidden></div>
       <div id="opsBox"><p class="empty">Chargement des bons…</p></div>
     </section>
@@ -533,6 +538,28 @@ button{cursor:pointer}
         <label class="field" style="margin-block-start:10px"><span>Téléphone (facultatif)</span><input id="frNPhone" inputmode="tel" autocomplete="off" maxlength="25"></label>
         <p class="err" id="frNErr" role="alert" hidden></p>
         <div class="actions" style="margin-block-start:10px"><button class="primary" id="frNAdd" type="button">Ajouter le fournisseur</button></div>
+      </div>
+    </section>
+
+    <section id="view-staff" role="tabpanel" aria-labelledby="tab-staff" hidden>
+      <div class="card" style="margin-block-start:14px" id="stCard"></div>
+      <div class="card" id="stNewCard">
+        <h2>Nouvelle personne</h2>
+        <label class="field"><span>Nom</span><input id="stNName" autocomplete="off" maxlength="60" placeholder="Ex : Karim"></label>
+        <label class="field" style="margin-block-start:10px"><span>Poste (facultatif)</span><input id="stNRole" autocomplete="off" maxlength="40" placeholder="Machiniste, agent, livreur…"></label>
+        <div class="skrow" style="margin-block-start:10px"><label class="field"><span>Salaire / mois (DH)</span><input id="stNSal" inputmode="decimal" autocomplete="off" placeholder="0"></label><label class="field"><span>Téléphone</span><input id="stNPhone" inputmode="tel" autocomplete="off" maxlength="25"></label></div>
+        <p class="err" id="stNErr" role="alert" hidden></p>
+        <div class="actions" style="margin-block-start:10px"><button class="primary" id="stNAdd" type="button">Ajouter la personne</button></div>
+      </div>
+    </section>
+
+    <section id="view-virements" role="tabpanel" aria-labelledby="tab-virements" hidden>
+      <div class="card" style="margin-block-start:14px">
+        <h2>Virements à valider</h2>
+        <p class="hint">Virements notés par les agents : vérifie que l’argent est arrivé sur ton compte, puis valide. Tant que ce n’est pas validé, ce n’est <b>pas compté</b> dans le CA réel ni dans le bénéfice.</p>
+        <div class="pvsum" id="pvSum"></div>
+        <div id="pvBox"></div>
+        <p class="err" id="pvErr" role="alert" hidden></p>
       </div>
     </section>
 
@@ -765,6 +792,10 @@ button{cursor:pointer}
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>
       Commandes<span class="bdg" id="ordBadge" hidden></span>
     </button>
+    <button class="tab" id="tab-virements" role="tab" aria-selected="false" type="button" data-view="virements">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg>
+      Virements<span class="bdg" id="pvBadge" hidden></span>
+    </button>
     <button class="tab" id="tab-cloture" role="tab" aria-selected="false" type="button" data-view="cloture">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg>
       Clôture
@@ -792,6 +823,10 @@ button{cursor:pointer}
     <button class="tab" id="tab-fourn" role="tab" aria-selected="false" type="button" data-view="fourn">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>
       Fournisseurs
+    </button>
+    <button class="tab" id="tab-staff" role="tab" aria-selected="false" type="button" data-view="staff">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M17 14.2c2.4.2 4 2 4 4.8"/></svg>
+      Personnel
     </button>
     <button class="tab" id="tab-reglages" role="tab" aria-selected="false" type="button" data-view="reglages">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -826,12 +861,30 @@ button{cursor:pointer}
   <p class="err" id="fpErr" role="alert" hidden></p>
   <div class="acts"><button class="primary" id="fpGo" type="button">Enregistrer le paiement</button><button class="ghost" id="fpClose" type="button">Fermer</button></div>
 </div></div>
-<div class="dlg" id="pvDlg" hidden role="dialog" aria-modal="true" aria-labelledby="pvT"><div>
-  <h2 id="pvT">Virements à valider</h2>
-  <p class="hint">Ces virements ont été notés par un agent. Vérifie sur ton compte que l’argent est bien arrivé : tant qu’ils ne sont pas validés, ils ne comptent <b>pas</b> dans le CA réel ni dans le bénéfice.</p>
-  <div id="pvList"></div>
-  <p class="err" id="pvErr" role="alert" hidden></p>
-  <div class="acts"><button class="ghost" id="pvClose" type="button">Fermer</button></div>
+<div class="dlg" id="sfDlg" hidden role="dialog" aria-modal="true" aria-labelledby="sfT"><div>
+  <h2 id="sfT">Verser le salaire</h2>
+  <p class="hint" id="sfWho"></p>
+  <label class="field"><span>Mois du salaire</span><input id="sfMonth" type="month"></label>
+  <div class="lrow"><span>Reste à verser ce mois</span><b id="sfRest">0,00 DH</b></div>
+  <label class="field"><span>Montant versé (DH)</span><input id="sfAmt" inputmode="decimal" autocomplete="off"></label>
+  <label class="field"><span>Avance déduite du salaire (DH) <small id="sfAdvHint"></small></span><input id="sfDed" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+  <label class="field"><span>D’où sort l’argent</span><select id="sfMode"><option value="especes">Tiroir (espèces)</option><option value="coffre">Coffre</option><option value="virement">Virement</option></select></label>
+  <label class="field"><span>Date</span><input id="sfDate" type="date"></label>
+  <label style="display:flex;gap:10px;align-items:flex-start;font-size:.9rem"><input type="checkbox" id="sfChg" checked style="margin-top:3px"><span>Écrire aussi dans les <b>charges de la caisse</b> (tiroir, coffre et bénéfice en tiennent compte)</span></label>
+  <label class="field"><span>Note (facultatif)</span><input id="sfNote" maxlength="120" autocomplete="off"></label>
+  <p class="err" id="sfErr" role="alert" hidden></p>
+  <div class="acts"><button class="primary" id="sfGo" type="button">Enregistrer le salaire</button><button class="ghost" id="sfClose" type="button">Fermer</button></div>
+</div></div>
+<div class="dlg" id="avDlg" hidden role="dialog" aria-modal="true" aria-labelledby="avT"><div>
+  <h2 id="avT">Donner une avance</h2>
+  <p class="hint" id="avWho"></p>
+  <label class="field"><span>Montant de l’avance (DH)</span><input id="avAmt" inputmode="decimal" autocomplete="off"></label>
+  <label class="field"><span>D’où sort l’argent</span><select id="avMode"><option value="especes">Tiroir (espèces)</option><option value="coffre">Coffre</option><option value="virement">Virement</option></select></label>
+  <label class="field"><span>Date</span><input id="avDate" type="date"></label>
+  <label style="display:flex;gap:10px;align-items:flex-start;font-size:.9rem"><input type="checkbox" id="avChg" checked style="margin-top:3px"><span>Écrire aussi dans les <b>charges de la caisse</b></span></label>
+  <label class="field"><span>Note (facultatif)</span><input id="avNote" maxlength="120" autocomplete="off" placeholder="Ex : loyer, urgence"></label>
+  <p class="err" id="avErr" role="alert" hidden></p>
+  <div class="acts"><button class="primary" id="avGo" type="button">Enregistrer l’avance</button><button class="ghost" id="avClose" type="button">Fermer</button></div>
 </div></div>
 <div class="dlg" id="skDlg" hidden role="dialog" aria-modal="true" aria-labelledby="skDT"><div>
   <h2 id="skDT">Consommable</h2>
@@ -1390,7 +1443,7 @@ function rowHtml(o,num){
   if(ordO){lbl='<b>'+esc(o.clientName)+'</b><span style="'+sub+'">'+nfq(ordO.qty)+(ordO.unit?' '+esc(ordO.unit):'')+' × '+fmt(ordO.price)+' DH</span>'+(ordO.note?'<span style="'+sub+'">'+esc(ordO.note)+'</span>':'')}
   else if(isV&&o.clientName&&o.label&&!o.aux&&/×\s*\d/.test(o.label)){var lp=o.label.split(' · ');lbl='<b>'+esc(o.clientName)+'</b><span style="'+sub+'">'+esc(lp[0])+'</span>'+(lp.length>1?'<span style="'+sub+'">'+esc(lp.slice(1).join(' · '))+'</span>':'')}
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+(o.cancelled?' cancelled':'')+'">'
-    +'<span class="num">#'+num+'</span>'
+    +'<span class="num">'+(typeof num==='number'||/^\d+$/.test(String(num))?'#'+num:esc(num))+'</span>'
     +'<div><div class="lbl">'+lbl+'</div>'
     +'<div class="meta"><span>'+hm+(hm?' · ':'')+tl+(a?' · '+esc(a):'')+'</span>'
     +(m==='credit'?'<span class="tag credit">Crédit</span>':(m!=='especes'||isR?'<span class="tag '+(isR?'rg':'mode')+'">'+MODES[m]+'</span>':''))
@@ -1411,8 +1464,27 @@ function renderFilters(){
     return '<button type="button" class="fbtn" data-f="'+k+'" aria-pressed="'+(state.filter===k)+'">'+flabel(k)+' · '+counts[k]+'</button>';
   }).join('');
 }
+/* recherche d'un bon : par nom du client (ou note / produit) ou par montant */
+function bonMatch(name,cents,extra,q){
+  q=String(q||'').trim();if(!q)return true;
+  var qd=q.replace(/[\s\u00a0]/g,'').replace('.',','),amt=String(cents/100).replace('.',',');
+  if(/^\d[\d,]*$/.test(qd)&&(amt===qd||amt.indexOf(qd)>=0))return true;
+  var k=nameKey(q);if(!k)return false;
+  return nameKey(String(name||'')+' '+String(extra||'')).indexOf(k)>=0;
+}
 function renderBons(){
-  var box=$('opsBox');
+  var box=$('opsBox'),bq=(state.bonQ||'').trim();
+  if(bq){
+    ensureWide();$('filters').hidden=true;
+    var src=(state.wOps&&state.wOps.length?state.wOps:(state.ops||[])),seen={},found=[];
+    src.concat(state.ops||[]).forEach(function(o){if(!o||seen[o.id]||o.aux||(o.type!=='vente'&&o.type!=='reglement'&&o.type!=='charge'))return;seen[o.id]=1;if(bonMatch(o.clientName,o.cents,(o.label||'')+' '+(o.product||''),bq))found.push(o)});
+    found.sort(function(a,b){return (b.ts||0)-(a.ts||0)});
+    var tv=0,tr=0;found.forEach(function(o){if(o.cancelled)return;if(o.type==='vente')tv+=o.cents;else if(o.type==='reglement')tr+=o.cents});
+    box.innerHTML='<div class="strip"><div><span>Résultats</span><b>'+found.length+'</b></div><div><span>Ventes</span><b class="v">'+fmt(tv)+'</b></div><div><span>Règlements</span><b>'+fmt(tr)+'</b></div></div>'
+      +(found.length?'<ul class="ops">'+found.slice(0,150).map(function(o){return rowHtml(o,dShort(o.date))}).join('')+'</ul>'+(found.length>150?'<p class="hint">150 premiers résultats : précise ta recherche.</p>':''):'<p class="empty">Aucun bon ne correspond.</p>')
+      +(state.wOps?'':'<p class="hint">Chargement de l’historique…</p>');
+    return;
+  }
   if(state.ops===null){box.innerHTML='<p class="empty">Chargement des bons…</p>';$('filters').hidden=true;return}
   renderFilters();
   if(!state.ops.length){
@@ -1595,26 +1667,25 @@ function cliStats(c,ids){var x=anAgg({s:'0000-00-00',e:'9999-99-99'},'__all',ids
 function waPhone(ph){var d=String(ph||'').replace(/[^\d+]/g,'');if(d.indexOf('+')===0)d=d.slice(1);d=d.replace(/\D/g,'');if(d.indexOf('00')===0)d=d.slice(2);else if(d.length===10&&d.charAt(0)==='0')d='212'+d.slice(1);else if(d.length===9&&/^[5-7]/.test(d))d='212'+d;return d.length>=9?d:''}
 function cliStatement(sel){
   var pris=0,paye=0;sel.ops.forEach(function(o){if(o.type==='reglement')paye+=o.cents;else pris+=o.cents});
-  var rest=pris-paye,rows=clientOps(sel).slice(0,25).map(function(o){var r=o.type==='reglement';return {d:dShort(o.date),t:(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+o.product:'')+(o.label&&!r?' · '+o.label:''),a:(r?'−':'+')+fmt(o.cents)}});
+  var cut=addDays(todayStr(),-14),rest=pris-paye,rows=clientOps(sel).filter(function(o){return o.date>=cut}).slice(0,25).map(function(o){var r=o.type==='reglement';return {d:dShort(o.date),t:(r?'Règlement '+MODES[modeOf(o)].toLowerCase():'Crédit')+(o.product?' · '+o.product:'')+(o.label&&!r?' · '+o.label:''),a:(r?'−':'+')+fmt(o.cents)}});
   return {name:sel.name,pris:pris,paye:paye,rest:rest,rows:rows,date:dShort(todayStr())};
 }
 function cliStatementText(st){
-  var l=['Bonjour '+st.name+',','Voici votre relevé de compte au '+st.date+' :','','Crédits : '+fmt(st.pris)+' DH','Règlements : '+fmt(st.paye)+' DH',(st.rest<0?'Avance : ':'Reste à payer : ')+fmt(st.rest)+' DH'];
-  if(st.rows.length){l.push('','Derniers mouvements :');st.rows.slice(0,12).forEach(function(r){l.push(r.d+' · '+r.t+' · '+r.a+' DH')})}
+  var l=['Bonjour '+st.name+',','Voici votre relevé de compte au '+st.date+' :','',(st.rest<0?'Avance : ':'Reste à payer : ')+fmt(st.rest)+' DH'];
+  if(st.rows.length){l.push('','Mouvements des 15 derniers jours :');st.rows.slice(0,12).forEach(function(r){l.push(r.d+' · '+r.t+' · '+r.a+' DH')})}
   l.push('','Merci !');return l.join('\n');
 }
 function cliStatementBlob(st,cb){
-  var W=720,pad=36,lh=40,H=pad*2+150+Math.max(1,st.rows.length)*lh+90,sc=2,cv=document.createElement('canvas');
+  var W=720,pad=36,lh=40,H=pad*2+82+Math.max(1,st.rows.length)*lh+90,sc=2,cv=document.createElement('canvas');
   cv.width=W*sc;cv.height=H*sc;var c=cv.getContext('2d');c.scale(sc,sc);
   c.fillStyle='#fff';c.fillRect(0,0,W,H);c.fillStyle='#1b7a4c';c.fillRect(0,0,W,86);
   c.fillStyle='#fff';c.font='700 28px system-ui,sans-serif';c.fillText('Relevé de compte',pad,40);c.font='500 18px system-ui,sans-serif';c.fillText(st.name+' · '+st.date,pad,68);
   var y=86+pad+10;c.fillStyle='#111';c.font='500 20px system-ui,sans-serif';
-  [['Crédits',fmt(st.pris)+' DH'],['Règlements',fmt(st.paye)+' DH']].forEach(function(p){c.textAlign='left';c.fillText(p[0],pad,y);c.textAlign='right';c.fillText(p[1],W-pad,y);y+=34});
   c.font='700 24px system-ui,sans-serif';c.fillStyle=st.rest>0?'#b93a22':'#1b7a4c';c.textAlign='left';c.fillText(st.rest<0?'Avance':'Reste à payer',pad,y+6);c.textAlign='right';c.fillText(fmt(st.rest)+' DH',W-pad,y+6);y+=34;
   c.strokeStyle='#d3daea';c.beginPath();c.moveTo(pad,y);c.lineTo(W-pad,y);c.stroke();y+=30;
   c.font='500 18px system-ui,sans-serif';c.fillStyle='#111';
   st.rows.forEach(function(r){c.textAlign='left';var t=r.t;while(c.measureText(r.d+'  '+t).width>W-pad*2-120&&t.length>4)t=t.slice(0,-2);c.fillText(r.d+'  '+t,pad,y);c.textAlign='right';c.fillStyle=r.a.charAt(0)==='−'?'#1b7a4c':'#111';c.fillText(r.a,W-pad,y);c.fillStyle='#111';y+=lh});
-  if(!st.rows.length){c.textAlign='left';c.fillText('Aucun mouvement.',pad,y)}
+  if(!st.rows.length){c.textAlign='left';c.fillText('Aucun mouvement ces 15 derniers jours.',pad,y)}
   cv.toBlob(cb,'image/png');
 }
 function cliWaText(id){
@@ -1673,7 +1744,7 @@ var CLI_PERIODS=[['all','Tout'],['w','Cette semaine'],['pw','Sem. dernière'],['
 function ensureWide(){
   if(state.wideSub||!store||store.mode!=='sheet')return;
   state.wideSub=1;var t=todayStr();
-  store.subscribeOps(addDays(t,-400),t,function(rows){state.wOps=rows;if(state.view==='stats')renderStats();if(state.view==='clients')renderClients()},onStoreErr);
+  store.subscribeOps(addDays(t,-400),t,function(rows){state.wOps=rows;if(state.bonQ&&state.view==='bons')renderBons();if(state.view==='stats')renderStats();if(state.view==='clients')renderClients()},onStoreErr);
 }
 /* montant réellement facturé d'une commande payée = somme de ses bons (le prix a pu être modifié à l'encaissement) */
 function effBuild(){
@@ -2650,45 +2721,159 @@ function pvTotal(){var t=0;(state.pend||[]).forEach(function(o){t+=o.cents});ret
 function renderPend(){
   var b=$('pvBanner'),n=pvCount();
   if(b){b.hidden=!n;if(n)b.innerHTML='<span class="ic">⏳</span><span><b>'+n+' virement'+(n>1?'s':'')+' à valider</b> · '+fmt(pvTotal())+' DH non compté'+(n>1?'s':'')+' dans le CA. Touche pour vérifier.</span>'}
+  var g=$('pvBadge');if(g){g.hidden=!n;g.textContent=n}
   updDot();
-  if(!$('pvDlg').hidden)pvList();
+  if(state.view==='virements')pvList();
 }
 function pvList(){
-  var l=state.pend||[];
-  $('pvList').innerHTML=l.length?l.map(function(o){
+  var l=(state.pend||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0)});
+  $('pvSum').innerHTML='<div><span>À valider</span><b>'+l.length+'</b></div><div><span>Montant non compté</span><b>'+fmt(pvTotal())+' DH</b></div>';
+  $('pvBox').innerHTML=l.length?l.map(function(o){
     var t=o.ts?new Date(o.ts):null,isR=o.type==='reglement',nm=o.clientName||o.label||(isR?'Règlement':'Vente');
-    return '<div class="frl"><div class="hd"><b>'+esc(nm)+'</b><b class="m">'+(isR?'':'+')+fmt(o.cents)+' DH</b></div><small>'+dShort(o.date)+(t?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+' · '+(isR?'Règlement':'Vente')+(o.agent?' · '+esc(o.agent):'')+(o.product?' · '+esc(o.product):'')+(o.clientName&&o.label?' · '+esc(o.label):'')+'</small>'
-      +'<div class="acts2"><button type="button" class="mini ok" data-pvok="'+esc(o.id)+'">Valider ✓</button><button type="button" class="mini'+(state.pvArm===o.id?' arm':'')+'" data-pvno="'+esc(o.id)+'">'+(state.pvArm===o.id?'Confirmer : non reçu ?':'Non reçu')+'</button></div></div>';
-  }).join(''):'<p class="muted">Aucun virement en attente.</p>';
+    return '<div class="pvc"><div class="t"><b class="n">'+esc(nm)+'</b><b class="m">'+fmt(o.cents)+' DH</b></div>'
+      +'<div class="s">'+(isR?'Règlement':'Vente')+' · '+dShort(o.date)+(t?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+(o.agent?' · '+esc(o.agent):'')+'</div>'
+      +((o.product||o.label)?'<div class="l">'+(o.product?'<b>'+esc(o.product)+'</b>':'')+(o.product&&o.label?' · ':'')+esc(o.label||'')+'</div>':'')
+      +'<div class="bt"><button type="button" class="ok" data-pvok="'+esc(o.id)+'">Valider ✓</button><button type="button" class="'+(state.pvArm===o.id?'arm':'')+'" data-pvno="'+esc(o.id)+'">'+(state.pvArm===o.id?'Confirmer : non reçu ?':'Non reçu')+'</button></div></div>';
+  }).join('')+(l.length>1?'<button type="button" class="pvall'+(state.pvAllArm?' arm':'')+'" id="pvAll">'+(state.pvAllArm?'Confirmer : valider les '+l.length+' virements ?':'Tout valider ('+l.length+')')+'</button>':''):'<p class="muted" style="margin-block-start:12px">✓ Aucun virement en attente.</p>';
 }
 function pvAct(id,ok){
   var er=$('pvErr');er.hidden=true;
-  if(!store||!store.validateOp)return;
-  store.validateOp(id,ok).then(function(){toast(ok?'Virement validé : compté dans la caisse':'Marqué non reçu : bon annulé')},function(x){er.textContent=(x&&x.code==='network')?'Pas de connexion. Réessaie.':((x&&x.message)||'Erreur');er.hidden=false;toast(er.textContent)});
+  if(!store||!store.validateOp)return Promise.resolve();
+  return store.validateOp(id,ok).then(function(){toast(ok?'Virement validé : compté dans la caisse':'Marqué non reçu : bon annulé')},function(x){er.textContent=(x&&x.code==='network')?'Pas de connexion. Réessaie.':((x&&x.message)||'Erreur');er.hidden=false;toast(er.textContent)});
+}
+function pvAll(){
+  var ids=(state.pend||[]).map(function(o){return o.id}),er=$('pvErr');er.hidden=true;
+  var p=Promise.resolve(),n=0;
+  ids.forEach(function(id){p=p.then(function(){return store.validateOp(id,true).then(function(){n++})})});
+  p.then(function(){toast(n+' virement'+(n>1?'s':'')+' validé'+(n>1?'s':'')+' : compté'+(n>1?'s':'')+' dans la caisse')},function(x){er.textContent=(x&&x.code==='network')?'Pas de connexion. '+n+' validé(s) avant la coupure.':((x&&x.message)||'Erreur');er.hidden=false;toast(er.textContent)});
 }
 function pvWire(){
-  $('pvBanner').addEventListener('click',function(){$('pvErr').hidden=true;pvList();$('pvDlg').hidden=false});
-  $('pvClose').addEventListener('click',function(){$('pvDlg').hidden=true});
-  $('pvDlg').addEventListener('click',function(e){if(e.target===$('pvDlg')){$('pvDlg').hidden=true;return}
-    var b=e.target.closest('[data-pvok]');if(b){pvAct(b.dataset.pvok,true);return}
-    b=e.target.closest('[data-pvno]');if(b){var id=b.dataset.pvno;if(state.pvArm!==id){state.pvArm=id;clearTimeout(state.pvArmT);state.pvArmT=setTimeout(function(){state.pvArm=null;pvList()},4000);pvList();return}state.pvArm=null;pvAct(id,false)}});
+  $('pvBanner').addEventListener('click',function(){setView('virements')});
+  $('view-virements').addEventListener('click',function(e){
+    var b=e.target.closest('[data-pvok]');if(b){state.pvArm=null;pvAct(b.dataset.pvok,true);return}
+    b=e.target.closest('[data-pvno]');if(b){var id=b.dataset.pvno;if(state.pvArm!==id){state.pvArm=id;clearTimeout(state.pvArmT);state.pvArmT=setTimeout(function(){state.pvArm=null;pvList()},4000);pvList();return}state.pvArm=null;pvAct(id,false);return}
+    if(e.target.closest('#pvAll')){if(!state.pvAllArm){state.pvAllArm=true;clearTimeout(state.pvAllT);state.pvAllT=setTimeout(function(){state.pvAllArm=false;pvList()},4000);pvList();return}state.pvAllArm=false;pvAll()}
+  });
   document.addEventListener('click',function(e){var b=e.target.closest('[data-pvrow]');if(b){pvAct(b.dataset.pvrow,true)}});
+}
+/* ---------- personnel : salaires et avances ---------- */
+var ST_MODES={especes:'Tiroir',coffre:'Coffre',virement:'Virement'};
+var ST_MON=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+function stMonName(m){var p=String(m||'').split('-');return p.length===2?ST_MON[+p[1]-1]+' '+p[0]:''}
+function stAddMonth(m,n){var p=m.split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1+n,1));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)}
+function stLoad(){
+  if(!frOK()){renderStaff();return}
+  store.stockCall('staffSnap',{}).then(function(j){state.staff=j.staff;renderStaff()},function(x){state.stErr=frFail(x);renderStaff()});
+}
+function stRun(p,okMsg,errEl,after){
+  return p.then(function(j){if(j&&j.staff)state.staff=j.staff;toast(okMsg);renderStaff();if(after)after()},function(x){if(errEl){errEl.textContent=frFail(x);errEl.hidden=false}else toast(frFail(x))});
+}
+function stOne(id){return ((state.staff&&state.staff.staff)||[]).find(function(s){return s.id===id})}
+function stPaidMonth(id,mo){var t=0;((state.staff&&state.staff.pays)||[]).forEach(function(p){if(p.st===id&&p.k==='salaire'&&!p.x&&p.mo===mo)t+=p.c+p.ded});return t}
+function renderStaff(){
+  var card=$('stCard'),f=state.staff;
+  $('stNewCard').hidden=!!state.stSel||!frOK();
+  if(!frOK()){card.innerHTML='<div class="empty"><strong>Connecte la Google Sheet.</strong>Le personnel et les salaires sont enregistrés dans la Google Sheet : ils ne marchent pas en mode local.</div>';return}
+  if(state.stErr&&!f){card.innerHTML='<p class="err">'+esc(state.stErr)+'</p><button class="ghost" type="button" data-st-retry="1">Réessayer</button>';return}
+  if(f===undefined||f===null){card.innerHTML='<p class="muted">Chargement…</p>';return}
+  var mo=state.stMonth||todayStr().slice(0,7),sel=state.stSel?stOne(state.stSel):null;
+  if(state.stSel&&!sel)state.stSel=null;
+  var nav='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-block:6px"><button type="button" class="mini" data-st-mo="-1" aria-label="Mois précédent">‹</button><b>'+esc(stMonName(mo))+'</b><button type="button" class="mini" data-st-mo="1" aria-label="Mois suivant">›</button></div>';
+  if(!sel){
+    var totRest=0,totAdv=0,totSal=0;f.staff.forEach(function(s){totSal+=s.salary;totRest+=Math.max(0,s.salary-stPaidMonth(s.id,mo));if(s.adv>0)totAdv+=s.adv});
+    card.innerHTML='<h2>Personnel</h2>'+nav
+      +'<div class="stk" style="margin-block:8px"><div><small>Salaires restant à verser</small><b>'+fmt(totRest)+'</b></div><div><small>Avances en cours</small><b>'+fmt(totAdv)+'</b></div></div>'
+      +(f.staff.length?f.staff.map(function(s){var rest=s.salary-stPaidMonth(s.id,mo);return '<button type="button" class="cli '+(rest>0&&s.salary>0?'due':'')+'" data-st="'+esc(s.id)+'"><span>'+esc(s.name)+'<small style="display:block;color:var(--ink-2)">'+(s.role?esc(s.role)+' · ':'')+'salaire '+fmt(s.salary)+(s.adv>0?' · avance '+fmt(s.adv):'')+'</small></span><b>'+(s.salary>0?(rest>0?fmt(rest)+' DH':'payé ✓'):'—')+'</b></button>'}).join(''):'<div class="empty"><strong>Aucune personne.</strong>Ajoute la première ci-dessous (nom, poste, salaire du mois).</div>');
+    return;
+  }
+  var pays=f.pays.filter(function(p){return p.st===sel.id}),paid=stPaidMonth(sel.id,mo),rest=sel.salary-paid;
+  var h='<button type="button" class="linkbtn" data-st-back="1">← Tout le personnel</button><h2>'+esc(sel.name)+'</h2>'
+    +'<p class="hint">'+[sel.role?esc(sel.role):'',sel.phone?'<a href="tel:'+esc(sel.phone.replace(/[^\d+]/g,''))+'">'+esc(sel.phone)+'</a>':'',sel.note?esc(sel.note):''].filter(Boolean).join(' · ')+'</p>'+nav
+    +'<div class="lrow"><span>Salaire du mois</span><b>'+fmt(sel.salary)+' DH</b></div><div class="lrow"><span>Déjà versé (avances déduites comprises)</span><b>'+fmt(paid)+' DH</b></div><div class="lrow total"><span>'+(rest<0?'Versé en plus':'Reste à verser')+'</span><b>'+fmt(Math.abs(rest))+' DH</b></div>'
+    +'<div class="lrow"><span>Avance en cours (à récupérer)</span><b style="color:'+(sel.adv>0?'var(--charge)':'inherit')+'">'+fmt(sel.adv>0?sel.adv:0)+' DH</b></div>'
+    +'<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-block-start:10px"><button class="primary" type="button" data-st-sal="'+esc(sel.id)+'">Verser le salaire</button><button class="ghost" type="button" data-st-adv="'+esc(sel.id)+'">Donner une avance</button></div>';
+  h+=pays.length?'<h2 style="margin-block:16px 4px;font-size:.95rem">Historique</h2>'+pays.map(function(p){
+    var isS=p.k==='salaire',amt=p.c,t=p.s?new Date(p.s):null;
+    return '<div class="frl'+(p.x?' x':'')+'"><div class="hd"><b>'+(isS?'Salaire · '+esc(stMonName(p.mo)):'Avance')+'</b><b class="m" style="color:var(--charge)">'+(amt>0?fmt(amt)+' DH':fmt(p.ded)+' DH')+'</b></div>'
+      +'<small>'+dShort(p.d)+(p.m?' · '+esc(ST_MODES[p.m]||p.m):'')+(isS&&p.ded>0?' · dont avance déduite '+fmt(p.ded)+' DH':'')+(p.n?' · '+esc(p.n):'')+(p.x?' · Annulé':'')+'</small>'
+      +(p.x?'':'<div style="margin-block-start:6px"><button type="button" class="mini'+(state.stArm===p.id?' arm':'')+'" data-st-x="'+esc(p.id)+'">'+(state.stArm===p.id?'Confirmer l’annulation ?':'Annuler')+'</button></div>')+'</div>';
+  }).join(''):'<p class="muted" style="margin-block-start:12px">Aucun versement pour l’instant.</p>';
+  h+='<details style="margin-block-start:14px"><summary>Nom, poste, salaire, téléphone</summary><div class="field" style="gap:8px;margin-block-start:8px"><input id="stEName" maxlength="60" autocomplete="off" value="'+esc(sel.name)+'" aria-label="Nom"><input id="stERole" maxlength="40" autocomplete="off" placeholder="Poste" value="'+esc(sel.role||'')+'" aria-label="Poste"><input id="stESal" inputmode="decimal" autocomplete="off" placeholder="Salaire / mois (DH)" value="'+esc(sel.salary?toInput(sel.salary):'')+'" aria-label="Salaire"><input id="stEPhone" inputmode="tel" maxlength="25" autocomplete="off" placeholder="Téléphone" value="'+esc(sel.phone||'')+'" aria-label="Téléphone"><input id="stENote" maxlength="120" autocomplete="off" placeholder="Note" value="'+esc(sel.note||'')+'" aria-label="Note"><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" type="button" data-st-save="'+esc(sel.id)+'">Enregistrer</button><button class="mini'+(state.stArm===('arch'+sel.id)?' arm':'')+'" type="button" data-st-arch="'+esc(sel.id)+'">'+(state.stArm===('arch'+sel.id)?'Confirmer ?':'Archiver')+'</button></div></div></details>';
+  card.innerHTML=h;
+}
+var stSalId=null,stAdvId=null;
+function stSalHint(){
+  var s=stOne(stSalId);if(!s)return;var mo=$('sfMonth').value||todayStr().slice(0,7),rest=s.salary-stPaidMonth(s.id,mo);
+  $('sfRest').textContent=fmt(Math.max(0,rest))+' DH';
+}
+function stOpenSal(id){
+  var s=stOne(id);if(!s)return;stSalId=id;var mo=state.stMonth||todayStr().slice(0,7);
+  $('sfWho').textContent=s.name+' · salaire '+fmt(s.salary)+' DH';$('sfMonth').value=mo;
+  var rest=Math.max(0,s.salary-stPaidMonth(id,mo)),ded=s.adv>0?Math.min(s.adv,rest):0;
+  $('sfDed').value=ded?toInput(ded):'';$('sfAmt').value=rest-ded>0?toInput(rest-ded):'';
+  $('sfAdvHint').textContent=s.adv>0?'(avance en cours : '+fmt(s.adv)+' DH)':'(aucune avance en cours)';
+  $('sfMode').value='especes';$('sfDate').value=todayStr();$('sfChg').checked=true;$('sfNote').value='';$('sfErr').hidden=true;stSalHint();$('sfDlg').hidden=false;
+}
+function stOpenAdv(id){
+  var s=stOne(id);if(!s)return;stAdvId=id;
+  $('avWho').textContent=s.name+(s.adv>0?' · avance déjà en cours : '+fmt(s.adv)+' DH':'');$('avAmt').value='';$('avMode').value='especes';$('avDate').value=todayStr();$('avChg').checked=true;$('avNote').value='';$('avErr').hidden=true;$('avDlg').hidden=false;
+}
+function stWire(){
+  var v=$('view-staff');
+  v.addEventListener('click',function(e){
+    var b;
+    if(e.target.closest('[data-st-retry]')){state.stErr=null;state.staff=undefined;renderStaff();stLoad();return}
+    if((b=e.target.closest('[data-st-mo]'))){state.stMonth=stAddMonth(state.stMonth||todayStr().slice(0,7),+b.dataset.stMo);renderStaff();return}
+    if((b=e.target.closest('[data-st]'))){state.stSel=b.dataset.st;state.stArm=null;renderStaff();window.scrollTo(0,0);return}
+    if(e.target.closest('[data-st-back]')){state.stSel=null;renderStaff();return}
+    if((b=e.target.closest('[data-st-sal]'))){stOpenSal(b.dataset.stSal);return}
+    if((b=e.target.closest('[data-st-adv]'))){stOpenAdv(b.dataset.stAdv);return}
+    var arm=function(id,run){if(state.stArm!==id){state.stArm=id;clearTimeout(state.stArmT);state.stArmT=setTimeout(function(){state.stArm=null;renderStaff()},4000);renderStaff();return}state.stArm=null;run()};
+    if((b=e.target.closest('[data-st-x]'))){var ix=b.dataset.stX;arm(ix,function(){stRun(store.stockCall('cancelSpay',{id:ix}),'Annulé (charge de caisse retirée)')});return}
+    if((b=e.target.closest('[data-st-save]'))){var sal=$('stESal').value.trim()===''?0:parseMoney($('stESal').value);if(sal==null){toast('Salaire invalide');return}stRun(store.stockCall('saveStaff',{id:b.dataset.stSave,name:$('stEName').value,role:$('stERole').value,salary:sal,phone:$('stEPhone').value,note:$('stENote').value}),'Enregistré');return}
+    if((b=e.target.closest('[data-st-arch]'))){var ar=b.dataset.stArch;arm('arch'+ar,function(){var s=stOne(ar);stRun(store.stockCall('saveStaff',{id:ar,name:s.name,role:s.role,salary:s.salary,phone:s.phone,note:s.note,archived:true}),'Archivé',null,function(){state.stSel=null;renderStaff()})});return}
+  });
+  $('stNAdd').addEventListener('click',function(){
+    var er=$('stNErr');er.hidden=true;var name=$('stNName').value.replace(/\s+/g,' ').trim(),sal=$('stNSal').value.trim()===''?0:parseMoney($('stNSal').value);
+    if(name.length<2){er.textContent='Écris le nom.';er.hidden=false;return}
+    if(sal==null||sal<0){er.textContent='Salaire invalide.';er.hidden=false;return}
+    $('stNAdd').disabled=true;
+    stRun(store.stockCall('saveStaff',{id:frId('p'),name:name,role:$('stNRole').value,salary:sal,phone:$('stNPhone').value}),'Personne ajoutée',er,function(){['stNName','stNRole','stNSal','stNPhone'].forEach(function(i){$(i).value=''})}).then(function(){$('stNAdd').disabled=false});
+  });
+  $('sfClose').addEventListener('click',function(){$('sfDlg').hidden=true;stSalId=null});$('sfDlg').addEventListener('click',function(e){if(e.target===$('sfDlg')){$('sfDlg').hidden=true;stSalId=null}});
+  $('sfMonth').addEventListener('change',stSalHint);
+  $('sfGo').addEventListener('click',function(){
+    var er=$('sfErr');er.hidden=true;var c=$('sfAmt').value.trim()===''?0:parseMoney($('sfAmt').value),d=$('sfDed').value.trim()===''?0:parseMoney($('sfDed').value);
+    if(c==null||d==null||c<0||d<0){er.textContent='Montant invalide.';er.hidden=false;return}
+    if(c+d<=0){er.textContent='Écris le montant versé.';er.hidden=false;return}
+    $('sfGo').disabled=true;
+    stRun(store.stockCall('addSpay',{id:frId('y'),staff:stSalId,kind:'salaire',cents:c,ded:d,month:$('sfMonth').value,mode:$('sfMode').value,date:$('sfDate').value||todayStr(),asCharge:$('sfChg').checked,note:$('sfNote').value}),'Salaire enregistré',er,function(){$('sfDlg').hidden=true;stSalId=null}).then(function(){$('sfGo').disabled=false});
+  });
+  $('avClose').addEventListener('click',function(){$('avDlg').hidden=true;stAdvId=null});$('avDlg').addEventListener('click',function(e){if(e.target===$('avDlg')){$('avDlg').hidden=true;stAdvId=null}});
+  $('avGo').addEventListener('click',function(){
+    var er=$('avErr');er.hidden=true;var c=parseMoney($('avAmt').value);
+    if(!(c>0)){er.textContent='Écris le montant de l’avance.';er.hidden=false;return}
+    $('avGo').disabled=true;
+    stRun(store.stockCall('addSpay',{id:frId('v'),staff:stAdvId,kind:'avance',cents:c,mode:$('avMode').value,date:$('avDate').value||todayStr(),asCharge:$('avChg').checked,note:$('avNote').value}),'Avance enregistrée',er,function(){$('avDlg').hidden=true;stAdvId=null}).then(function(){$('avGo').disabled=false});
+  });
 }
 function setView(v){
   state.view=v;
-  ['bons','orders','cloture','mois','clients','stats','prods','stock','fourn','reglages'].forEach(function(n){
+  ['bons','orders','virements','cloture','mois','clients','stats','prods','stock','fourn','staff','reglages'].forEach(function(n){
     $('view-'+n).hidden=n!==v;
     $('tab-'+n).setAttribute('aria-selected',n===v?'true':'false');
   });
-  $('weekbar').hidden=v==='mois'||v==='clients'||v==='stats'||v==='prods'||v==='orders'||v==='stock'||v==='fourn'||v==='reglages';
+  $('weekbar').hidden=v==='mois'||v==='clients'||v==='stats'||v==='prods'||v==='orders'||v==='stock'||v==='fourn'||v==='staff'||v==='virements'||v==='reglages';
+  if(v==='virements')pvList();
   if(v==='stock')renderStock();
   if(v==='fourn'){state.frSel=null;renderFourn();frLoad()}
+  if(v==='staff'){state.stSel=null;renderStaff();stLoad()}
   if(v==='clients'||v==='stats')ensureWide();
   if(v==='orders'){renderOrdersView();if(store&&store.mode==='sheet'&&!state.ordRange){state.ordRange=1;store.subscribeOps(addDays(todayStr(),-60),todayStr(),function(){},onStoreErr)}}
   if(v==='prods'){if(store&&pdKey!==pdRange().s+'|'+pdRange().e)subscribeProds();else renderProds()}
   if(v==='stats'&&store&&stKey!==(state.stPeriod||'30'))subscribeStats();
   if(v==='mois'&&store&&mSubKey!==state.month)subscribeMonth();
-  var nm={bons:'Bons',orders:'Commandes',cloture:'Clôture',mois:'Mois',clients:'Clients',stats:'Stats',prods:'Produits',stock:'Stock',fourn:'Fournisseurs',reglages:'Réglages'};
+  var nm={bons:'Bons',orders:'Commandes',cloture:'Clôture',mois:'Mois',clients:'Clients',stats:'Stats',prods:'Produits',stock:'Stock',fourn:'Fournisseurs',staff:'Personnel',reglages:'Réglages'};
   $('viewName').textContent=nm[v]||'';
   closeMenu();
   window.scrollTo(0,0);
@@ -3251,7 +3436,7 @@ function init(){
   $('pmSave').addEventListener('click',savePmeta);
   $('stPeriods').addEventListener('click',function(e){var b=e.target.closest('button[data-p]');if(!b)return;state.stPeriod=b.dataset.p;subscribeStats()});
   $('menuBtn').addEventListener('click',toggleMenu);
-  $('skBanner').addEventListener('click',function(){setView('stock')});frWire();pvWire();
+  $('skBanner').addEventListener('click',function(){setView('stock')});frWire();stWire();pvWire();
   $('skList').addEventListener('click',function(e){var b=e.target.closest('[data-sk]');if(b)skOpen(b.dataset.sk)});
   $('skMovs').addEventListener('click',function(e){
     var b=e.target.closest('[data-skundo]');if(!b)return;var id=b.dataset.skundo;
@@ -3514,6 +3699,7 @@ function init(){
     $('edSave').disabled=true;
     store.editOp(edId,patch).then(function(){closeEdit();showPop('Bon modifié ✓',fmt(cents)+' DH · '+MODES[mode]+(cname?' · '+cname:''))}).catch(function(x){err(failMsg(x))}).then(function(){$('edSave').disabled=false});
   });
+  $('bonQ').addEventListener('input',function(){state.bonQ=this.value;renderBons()});
   $('opsBox').addEventListener('click',function(e){
     var t=e.target.closest('[data-dayt]');if(!t)return;
     var sec=t.parentNode,op=!sec.classList.contains('open');
