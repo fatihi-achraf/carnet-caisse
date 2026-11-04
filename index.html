@@ -917,6 +917,7 @@ button{cursor:pointer}
   <label class="field"><span>Mode de paiement</span><select id="edMode"></select></label>
   <label class="field" id="edClientBox"><span>Client</span><select id="edClient"></select></label>
   <label class="field" id="edProdBox"><span>Produit</span><select id="edProduct"></select></label>
+  <label class="field" id="edDateBox"><span>Date du bon</span><input id="edDate" type="date"><small class="hint">Change la date pour ramener un bon dans la semaine en cours (par exemple un règlement daté du jour clôturé). Les jours déjà clôturés sont refusés.</small></label>
   <label class="field"><span id="edLabelCap">Détail</span><input id="edLabel" maxlength="120" autocomplete="off"></label>
   <p class="err" id="edErr" role="alert" hidden></p>
   <div class="acts"><button class="primary" id="edSave" type="button">Enregistrer</button><button class="ghost" id="edCancel" type="button">Annuler</button></div>
@@ -988,6 +989,7 @@ function applyEdit(o,p){
   o.mode=p.mode;o.cents=p.cents;o.label=p.label;
   if(p.product)o.product=p.product;else delete o.product;
   if(p.cr){o.client=p.client;o.clientName=p.clientName;o.cr=1}else{delete o.client;delete o.cr;if(p.clientName)o.clientName=p.clientName;else delete o.clientName}
+  if(p.date){o.date=p.date;o.ts=Date.now()}
   o.editedAt=Date.now();
 }
 function makeLocalStore(){
@@ -1220,14 +1222,14 @@ function makeSheetStore(cfg){
   self.addOp=function(op){return self.addOpWithId('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),op)};
   self.editOp=function(id,patch){
     var o=cache.ops[id],prev=o?Object.assign({},o):null;
-    return write('editOp',{id:id,patch:{mode:patch.mode,cents:patch.cents,label:patch.label,product:patch.product,client:patch.client,clientName:patch.clientName},by:cfg.name||''},
+    return write('editOp',{id:id,patch:{mode:patch.mode,cents:patch.cents,label:patch.label,product:patch.product,client:patch.client,clientName:patch.clientName,date:patch.date},by:cfg.name||''},
       function(){if(o)applyEdit(o,patch)},
       function(){if(o){Object.keys(o).forEach(function(k){delete o[k]});Object.assign(o,prev)}});
   };
   self.pending=function(){return (cache.pending||[]).slice()};
   self.validateOp=function(id,ok){
     return call('validateOp',{id:id,ok:ok,by:cfg.name||''}).then(function(j){
-      var o=cache.ops[id];if(o){delete o.pend;if(ok===false)o.cancelled=true}
+      var o=cache.ops[id];if(o){delete o.pend;if(ok===false){if(o.type==='vente'&&o.clientName){o.mode='credit';o.cr=1}else o.cancelled=true}}
       cache.pending=Array.isArray(j.pending)?j.pending:[];fireAll();if(self.onPending)self.onPending(cache.pending);refresh();return j});
   };
   self.setCancelled=function(id,v,by){
@@ -2733,13 +2735,13 @@ function pvList(){
     return '<div class="pvc"><div class="t"><b class="n">'+esc(nm)+'</b><b class="m">'+fmt(o.cents)+' DH</b></div>'
       +'<div class="s">'+(isR?'Règlement':'Vente')+' · '+dShort(o.date)+(t?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+(o.agent?' · '+esc(o.agent):'')+'</div>'
       +((o.product||o.label)?'<div class="l">'+(o.product?'<b>'+esc(o.product)+'</b>':'')+(o.product&&o.label?' · ':'')+esc(o.label||'')+'</div>':'')
-      +'<div class="bt"><button type="button" class="ok" data-pvok="'+esc(o.id)+'">Valider ✓</button><button type="button" class="'+(state.pvArm===o.id?'arm':'')+'" data-pvno="'+esc(o.id)+'">'+(state.pvArm===o.id?'Confirmer : non reçu ?':'Non reçu')+'</button></div></div>';
+      +'<div class="bt"><button type="button" class="ok" data-pvok="'+esc(o.id)+'">Valider ✓</button><button type="button" class="'+(state.pvArm===o.id?'arm':'')+'" data-pvno="'+esc(o.id)+'">'+(state.pvArm===o.id?'Confirmer : non reçu → crédit ?':'Non reçu')+'</button></div></div>';
   }).join('')+(l.length>1?'<button type="button" class="pvall'+(state.pvAllArm?' arm':'')+'" id="pvAll">'+(state.pvAllArm?'Confirmer : valider les '+l.length+' virements ?':'Tout valider ('+l.length+')')+'</button>':''):'<p class="muted" style="margin-block-start:12px">✓ Aucun virement en attente.</p>';
 }
 function pvAct(id,ok){
   var er=$('pvErr');er.hidden=true;
   if(!store||!store.validateOp)return Promise.resolve();
-  return store.validateOp(id,ok).then(function(){toast(ok?'Virement validé : compté dans la caisse':'Marqué non reçu : bon annulé')},function(x){er.textContent=(x&&x.code==='network')?'Pas de connexion. Réessaie.':((x&&x.message)||'Erreur');er.hidden=false;toast(er.textContent)});
+  return store.validateOp(id,ok).then(function(){toast(ok?'Virement validé : compté dans la caisse':'Non reçu : passé en crédit du client')},function(x){er.textContent=(x&&x.code==='network')?'Pas de connexion. Réessaie.':((x&&x.message)||'Erreur');er.hidden=false;toast(er.textContent)});
 }
 function pvAll(){
   var ids=(state.pend||[]).map(function(o){return o.id}),er=$('pvErr');er.hidden=true;
@@ -3666,13 +3668,15 @@ function init(){
     $('edAmount').value=toInput(o.cents);
     $('edMode').innerHTML=keys.map(function(k){return '<option value="'+k+'">'+MODES[k]+'</option>'}).join('');$('edMode').value=m;
     var cl=clientsSorted();
-    if(o.client&&!cl.some(function(c){return c.id===o.client}))cl.push({id:o.client,name:o.clientName||'Client'});
-    $('edClient').innerHTML=cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
-    if(o.client)$('edClient').value=o.client;
+    var ecid=o.client||'';
+    if(!ecid&&o.clientName){var ek=nameKey(o.clientName),ef=cl.find(function(c){return nameKey(c.name)===ek});ecid=ef?ef.id:clientId(o.clientName)}
+    if(ecid&&!cl.some(function(c){return c.id===ecid}))cl.push({id:ecid,name:o.clientName||'Client'});
+    $('edClient').innerHTML=(ecid?'':'<option value="">— Choisis le client —</option>')+cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
+    $('edClient').value=ecid;
     var pl=getProducts().slice();if(o.product&&pl.indexOf(o.product)<0)pl.push(o.product);
     $('edProduct').innerHTML='<option value="">— Sans produit —</option>'+pl.map(function(p){return '<option value="'+esc(p)+'">'+esc(p)+'</option>'}).join('');
     $('edProduct').value=o.product||'';
-    $('edLabel').value=o.label||'';
+    $('edLabel').value=o.label||'';$('edDate').value=o.date||'';$('edDateBox').hidden=!state.canClose;
     $('edErr').hidden=true;edRefresh();
     $('editDlg').hidden=false;$('edAmount').focus();
   }
@@ -3695,7 +3699,7 @@ function init(){
       }
     }
     if(!cname&&edOp.clientName)cname=edOp.clientName;
-    var patch={mode:mode,cents:cents,label:label.slice(0,120),product:t==='vente'?$('edProduct').value:'',client:cid,clientName:cname,cr:needCl?1:0};
+    var patch={mode:mode,cents:cents,label:label.slice(0,120),product:t==='vente'?$('edProduct').value:'',client:cid,clientName:cname,cr:needCl?1:0};var nd=$('edDate').value;if(state.canClose&&nd&&nd!==edOp.date)patch.date=nd;
     $('edSave').disabled=true;
     store.editOp(edId,patch).then(function(){closeEdit();showPop('Bon modifié ✓',fmt(cents)+' DH · '+MODES[mode]+(cname?' · '+cname:''))}).catch(function(x){err(failMsg(x))}).then(function(){$('edSave').disabled=false});
   });
